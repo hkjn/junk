@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce junkapp dev
+BindsTo=junkapp-dev.service
+After=junkapp-dev.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /services/website/junkapp-dev '{ \"host\": \"%H\", \"port\": 8080, \"version\": \"bar\" }' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /services/website/junkapp-dev
+
+[X-Fleet]
+MachineOf=junkapp-dev.service
