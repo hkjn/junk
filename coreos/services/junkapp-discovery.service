@@ -4,7 +4,7 @@ BindsTo=junkapp.service
 After=junkapp.service
 
 [Service]
-ExecStart=/bin/sh -c "while true; do etcdctl set /services/website/junkapp@ '{ \"host\": \"%H\", \"port\": 8080, \"version\": \"foo\" }' --ttl 60;sleep 45;done"
+ExecStart=/bin/sh -c "while true; do etcdctl set /services/website/junkapp '{ \"host\": \"%H\", \"port\": 8080, \"version\": \"foo\" }' --ttl 60;sleep 45;done"
 ExecStop=/usr/bin/etcdctl rm /services/website/junkapp
 
 [X-Fleet]
