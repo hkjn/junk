@@ -10,7 +10,11 @@ Service discovery within CoreOS machine is done as follows, assuming a
 sidekick service like services/apache-discovery\@.service exists:
 $ etcdctl get /services/website/apache@1
 
-Need a way to bootstrap new CoreOS machine after it's up. Maybe would suffice to:
+Need a way to bootstrap new CoreOS machine after it's up. Maybe would suffice to do:
 $ git clone github.com/hkjn/junk
 $ fleetctl start services/*.service
+
+Need a way to handle different environments (devN, staging, prod);
+`docker run --env` can be used to specify environment variables for
+the container. Just have different .service files for each env?
 
