@@ -1,5 +1,5 @@
 [Unit]
-Description=Announce Apache1
+Description=Announce Apache
 BindsTo=apache@%i.service
 After=apache@%i.service
 
