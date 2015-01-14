@@ -1,0 +1,16 @@
+cloud-config.yaml's coreos.etcd values are used to generate
+/run/systemd/etcd.service.d/20-cloudinit.conf in the CoreOS machines, with contents like:
+[Service]
+Environment="ETCD_ADDR=104.155.11.115:4001"
+Environment="ETCD_DISCOVERY=https://discovery.etcd.io/9003ce88a362f778bdfb0097c3e35e4b"
+Environment="ETCD_NAME=coreos0"
+Environment="ETCD_PEER_ADDR=104.155.11.115:7001"
+
+Service discovery within CoreOS machine is done as follows, assuming a
+sidekick service like services/apache-discovery\@.service exists:
+$ etcdctl get /services/website/apache@1
+
+Need a way to bootstrap new CoreOS machine after it's up. Maybe would suffice to:
+$ git clone github.com/hkjn/junk
+$ fleetctl start services/*.service
+
