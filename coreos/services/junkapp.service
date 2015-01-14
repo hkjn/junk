@@ -6,6 +6,6 @@ After=docker.service
 TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker kill junkapp
 ExecStartPre=-/usr/bin/docker rm junkapp
-ExecStartPre=/usr/bin/docker pull hkjn/junkapp
+ExecStartPre=/usr/bin/docker pull hkjn/junkapp:v1
 ExecStart=/usr/bin/docker run --name junkapp  -t hkjn/junkapp:v1
 ExecStop=/usr/bin/docker stop junkapp
