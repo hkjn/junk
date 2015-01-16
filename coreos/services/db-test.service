@@ -7,7 +7,7 @@ TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker kill db-test
 ExecStartPre=-/usr/bin/docker rm db-test
 ExecStartPre=/usr/bin/docker pull hkjn/coreosdb:latest
-ExecStart=/usr/bin/docker run -p 127.0.0.1:3306:3310 --name db-test --env DB_USER=testuser DB_PASSWORD=testsecret -t hkjn/coreosdb:latest
+ExecStart=/usr/bin/docker run -p 127.0.0.1:3306:3310 --name db-test --env DB_USER=testuser --env DB_PASSWORD=testsecret -t hkjn/coreosdb:latest
 ExecStop=/usr/bin/docker stop db-prod
 
 [X-Fleet]

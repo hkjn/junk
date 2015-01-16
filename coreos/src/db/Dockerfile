@@ -17,7 +17,7 @@ RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysq
 ADD ./create_db.sql /var/db/create_db.sql
 
 # Uncomment to set DB credentials. Note: Not secure.
-# This can also be specified by passing --env DB_USER=foo DB_PASSWORD=bar to "docker run".
+# This can also be specified by passing --env DB_USER=foo --env DB_PASSWORD=bar to "docker run".
 # ENV DB_USER dbuser
 # ENV DB_PASSWORD dbsecret
 ENV SQL_URL file:/var/db/create_db.sql

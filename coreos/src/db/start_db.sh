@@ -10,7 +10,7 @@ echo "Starting MySQL.."
 /usr/sbin/mysqld &
 # TODO: Do something nicer to wait for DB to come up than just sleeping.
 sleep 5
-echo "Creating DB from ${DB_URL}.."
+echo "Creating DB from ${SQL_URL}.."
 curl ${SQL_URL} --silent --max-time 1 | mysql --default-character-set=utf8
 mysqladmin shutdown
 echo "done."
