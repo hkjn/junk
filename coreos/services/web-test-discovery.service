@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce test web server
+BindsTo=web-test.service
+After=web-test.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /services/web/test '{ \"host\": \"%H\", \"port\": 9000, \"version\": \"foobar\" }' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /services/web/test
+
+[X-Fleet]
+MachineOf=web-test.service
