@@ -1,0 +1,32 @@
+FROM ubuntu:latest
+
+MAINTAINER Henrik Jonsson <me@hkjn.me>
+
+# Install latest updates.
+RUN apt-get update
+RUN apt-get upgrade -y
+
+# Install mysql client and server.
+RUN apt-get -y install mysql-client mysql-server curl
+
+# Enable remote access (default is localhost only, we change this
+# otherwise our database would not be reachable from outside the container)
+RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+
+# Create database, with some dummy data.
+ADD ./create_db.sql /var/db/create_db.sql
+
+# Set DB credentials. Note: Not secure - we would on production
+# likely users at a later point.
+ENV DB_USER dbuser
+ENV DB_PASSWORD dbsecret
+ENV SQL_URL file:/var/db/create_db.sql
+ENV DB_ACCESS WRITE
+
+# Install starting script.
+ADD ./start_db.sh /usr/local/bin/start_db.sh
+RUN chmod +x /usr/local/bin/start_db.sh
+
+EXPOSE 3306
+
+CMD ["/usr/local/bin/start_db.sh"]
