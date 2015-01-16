@@ -87,10 +87,15 @@ func Serve() {
 // getEtcdHost returns the Host info from etcd.
 func getEtcdHost() (string, error) {
 	path := fmt.Sprintf("/services/db/%s", stage)
-	c := etcd.NewClient([]string{"http://127.0.0.1:4001"})
+	c := etcd.NewClient([]string{"http://172.17.42.1:4001"})
+	// TODO: From within a container we can't just go to 127.0.0.1:4001 for etcd; we need the docker0 interface's IP:
+	// https://coreos.com/docs/distributed-configuration/getting-started-with-etcd/#reading-and-writing-from-inside-a-container
+	// Is there something simpler than the following?
+	// ETCD_ENDPOINT="$(ifconfig docker0 | awk '/\<inet\>/ { print $2}'):4001"
+
 	r, err := c.Get(path, false, false)
 	if err != nil {
-		return "", fmt.Errorf("failed to read %s: %v", path, err)
+		return "", fmt.Errorf("failed to read etcd path %s: %v", path, err)
 	}
 	v := r.Node.Value
 	glog.V(1).Infof("read value %q from %s\n", v, path)
@@ -112,7 +117,7 @@ func getDB() (*sql.DB, error) {
 		var err error
 		addr, err = getEtcdHost()
 		if err != nil {
-			return nil, fmt.Errorf("failed to read from etcd: %v", err)
+			return nil, err
 		}
 	}
 	user := ""
@@ -146,7 +151,7 @@ type jsonAPI struct{}
 func (api jsonAPI) GetMonkey(id int) (*Monkey, error) {
 	db, err := getDB()
 	if err != nil {
-		return nil, fmt.Errorf("failed to contact DB: %v", err)
+		return nil, fmt.Errorf("failed to reach DB: %v", err)
 	}
 	row := db.QueryRow(`
       SELECT monkeyName, birthDate
