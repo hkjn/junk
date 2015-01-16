@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce production web server
+BindsTo=web-prod.service
+After=web-prod.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /services/web/prod '{ \"host\": \"%H\", \"port\": 80, \"version\": \"foobar\" }' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /services/web/prod
+
+[X-Fleet]
+MachineOf=web-prod.service

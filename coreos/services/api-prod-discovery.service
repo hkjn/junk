@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce production API server
+BindsTo=api-prod.service
+After=api-prod.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /services/api/prod '{ \"host\": \"%H\", \"port\": 9100, \"version\": \"foobar\" }' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /services/api/prod
+
+[X-Fleet]
+MachineOf=api-prod.service

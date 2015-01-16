@@ -1,0 +1,15 @@
+[Unit]
+Description=Test API server
+After=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill api-test
+ExecStartPre=-/usr/bin/docker rm api-test
+ExecStartPre=/usr/bin/docker pull hkjn/coreosapi:latest
+ExecStart=/usr/bin/docker run -p 127.0.0.1:9100:11000 --name api-test -t hkjn/coreosapi:latest --env STAGE=test
+ExecStop=/usr/bin/docker stop api-test
+
+[X-Fleet]
+Conflicts=api-test.service
+

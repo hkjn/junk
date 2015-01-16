@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce test API server
+BindsTo=api-test.service
+After=api-test.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /services/api/test '{ \"host\": \"%H\", \"port\": 11000, \"version\": \"foobar\" }' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /services/api/test
+
+[X-Fleet]
+MachineOf=api-test.service

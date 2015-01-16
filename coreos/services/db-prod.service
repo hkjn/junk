@@ -1,0 +1,17 @@
+[Unit]
+Description=Production MySQL DB
+After=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill db-prod
+ExecStartPre=-/usr/bin/docker rm db-prod
+# TODO: This could use a specific :stable tag to keep production on something that doesn't change.
+ExecStartPre=/usr/bin/docker pull hkjn/coreosdb:latest
+# TODO: This could provide --env DB_USER=liveuser DB_PASSWORD=livepw SQL_URL=http://[schemaservice]/create_db.sql
+ExecStart=/usr/bin/docker run -p 127.0.0.1:3306:3306 --name db-prod -t hkjn/coreosdb:latest
+ExecStop=/usr/bin/docker stop db-prod
+
+[X-Fleet]
+Conflicts=junkapp.service
+
