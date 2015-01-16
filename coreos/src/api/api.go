@@ -80,7 +80,7 @@ func Serve() {
 	if stage == "" {
 		log.Fatalf("FATAL: no STAGE set as environment variable")
 	}
-	fmt.Printf("api layer for %s stage starting..\n", stage)
+	glog.Infof("api layer for stage %q starting..\n", stage)
 	log.Fatal(http.ListenAndServe(bindAddr, newRouter(apiHandler{jsonAPI{}})))
 }
 
