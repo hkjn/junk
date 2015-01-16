@@ -115,14 +115,20 @@ func getDB() (*sql.DB, error) {
 			return nil, fmt.Errorf("failed to read from etcd: %v", err)
 		}
 	}
+	user := ""
+	password := ""
+	// Note: Obviously not secure, in real use we'd have an encrypted
+	// config.
+	if stage == "test" {
+		user = "testuser"
+		password = "testsecret"
+	} else if stage == "prod" {
+		user = "produser"
+		password = "prodsecret"
+	}
 	sqlSource := fmt.Sprintf(
 		"%s:%s@tcp(%s)/%s",
-		// Note: Obviously not secure, in production we'd have an encrypted
-		// config.
-		"dbuser",   // user
-		"dbsecret", // pass
-		addr,       // db address + port
-		"monkeydb") // db
+		user, password, addr, "monkeydb")
 	glog.V(1).Infof("connecting to MySQL at %s..\n", sqlSource)
 	db, err := sql.Open("mysql", sqlSource)
 	if err != nil {
