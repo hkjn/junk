@@ -12,6 +12,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,7 +26,8 @@ import (
 )
 
 var (
-	// Note that we always bind to the same port internally; the
+	dbAddr = flag.String("db_addr", "", "If set, TCP host for the DB. If not set, address is read from etcd")
+	// Note that we always bind to the same port inside the container; the
 	// .service file can map it to any external port that's desired
 	// based on which stage we're running.
 	bindAddr                        = ":9100"
@@ -41,8 +43,8 @@ type (
 		Name      string    `json:"name"`
 		Birthdate time.Time `json:"birthdate"`
 	}
+	// Monkeys are a collection of monkey.
 	Monkeys []*Monkey
-
 	// MonkeyAPI defines the interface on how we interact with monkeys.
 	MonkeyAPI interface {
 		GetMonkey(int) (*Monkey, error)
@@ -52,8 +54,26 @@ type (
 	}
 )
 
+// String returns a human-readable description of the monkey.
+func (m Monkey) String() string {
+	return fmt.Sprintf("%s (%d) was born on %v", m.Name, m.Id, m.Birthdate.Format("Mon, 02 Jan 2006"))
+}
+
+// String returns a human-readable description of the monkeys.
+func (ms Monkeys) String() string {
+	r := ""
+	for i, m := range ms {
+		if i > 0 {
+			r += ", "
+		}
+		r += m.String()
+	}
+	return r
+}
+
 // Serve blocks forever, serving the API on bindAddr.
 func Serve() {
+	flag.Parse()
 	stage = os.Getenv("STAGE")
 	if stage == "" {
 		log.Fatalf("FATAL: no STAGE set as environment variable")
@@ -64,22 +84,23 @@ func Serve() {
 
 func getDB() (*sql.DB, error) {
 	// TODO: read DB info from etcd.
-	addr := "172.17.0.31"
-	port := "3306"
-	sqlSource := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s",
-		// Note: Obviously not secure, in production we'd have an encrypted
-		// config.
-		"dbuser",   // user
-		"dbsecret", // pass
-		addr,       // db address
-		port,       // db port
-		"monkeydb") // db
-	db, err := sql.Open("mysql", sqlSource)
-	if err != nil {
-		return nil, err
+	if *dbAddr == "" {
+		return nil, fmt.Errorf("TODO: implement reading DB from etcd")
+	} else {
+		sqlSource := fmt.Sprintf(
+			"%s:%s@tcp(%s)/%s",
+			// Note: Obviously not secure, in production we'd have an encrypted
+			// config.
+			"dbuser",   // user
+			"dbsecret", // pass
+			*dbAddr,    // db address + port
+			"monkeydb") // db
+		db, err := sql.Open("mysql", sqlSource)
+		if err != nil {
+			return nil, err
+		}
+		return db, db.Ping()
 	}
-	return db, db.Ping()
 }
 
 type apiHandler struct {

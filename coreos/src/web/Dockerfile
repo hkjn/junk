@@ -1,11 +1,10 @@
 FROM golang
 MAINTAINER Henrik Jonsson <me@hkjn.me>
 
-ADD . /go/src/hkjn.me/junk/coreos/app
+ADD . /go/src/hkjn.me/junk/coreos/src/web
 
-# RUN go build app.go
-RUN go install hkjn.me/junk/coreos/app
+RUN go install hkjn.me/junk/coreos/src/web
 
-ENTRYPOINT /go/bin/app
+ENTRYPOINT /go/bin/web
 
-EXPOSE 8080
+EXPOSE 9000
