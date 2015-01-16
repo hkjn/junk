@@ -10,6 +10,7 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang/glog"
 
 	"encoding/json"
 	"flag"
@@ -22,6 +23,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/coreos/go-etcd/etcd"
 	"github.com/gorilla/mux"
 )
 
@@ -82,25 +84,51 @@ func Serve() {
 	log.Fatal(http.ListenAndServe(bindAddr, newRouter(apiHandler{jsonAPI{}})))
 }
 
-func getDB() (*sql.DB, error) {
-	// TODO: read DB info from etcd.
-	if *dbAddr == "" {
-		return nil, fmt.Errorf("TODO: implement reading DB from etcd")
-	} else {
-		sqlSource := fmt.Sprintf(
-			"%s:%s@tcp(%s)/%s",
-			// Note: Obviously not secure, in production we'd have an encrypted
-			// config.
-			"dbuser",   // user
-			"dbsecret", // pass
-			*dbAddr,    // db address + port
-			"monkeydb") // db
-		db, err := sql.Open("mysql", sqlSource)
-		if err != nil {
-			return nil, err
-		}
-		return db, db.Ping()
+// getEtcdHost returns the Host info from etcd.
+func getEtcdHost() (string, error) {
+	path := fmt.Sprintf("/services/db/%s", stage)
+	c := etcd.NewClient([]string{"http://127.0.0.1:4001"})
+	r, err := c.Get(path, false, false)
+	if err != nil {
+		return "", fmt.Errorf("failed to read %s: %v", path, err)
 	}
+	v := r.Node.Value
+	glog.V(1).Infof("read value %q from %s\n", v, path)
+	addr := struct {
+		Host    string `json:"host"`
+		Port    int    `json:"port"`
+		Version string `json:"version"`
+	}{}
+	err = json.Unmarshal([]byte(v), &addr)
+	if err != nil {
+		return "", fmt.Errorf("failed to interpret etcd value %q: %v", v, err)
+	}
+	return fmt.Sprintf("%s:%s", addr.Host, addr.Port), nil
+}
+
+func getDB() (*sql.DB, error) {
+	addr := *dbAddr
+	if *dbAddr == "" {
+		var err error
+		addr, err = getEtcdHost()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read from etcd: %v", err)
+		}
+	}
+	sqlSource := fmt.Sprintf(
+		"%s:%s@tcp(%s)/%s",
+		// Note: Obviously not secure, in production we'd have an encrypted
+		// config.
+		"dbuser",   // user
+		"dbsecret", // pass
+		addr,       // db address + port
+		"monkeydb") // db
+	glog.V(1).Infof("connecting to MySQL at %s..\n", sqlSource)
+	db, err := sql.Open("mysql", sqlSource)
+	if err != nil {
+		return nil, err
+	}
+	return db, db.Ping()
 }
 
 type apiHandler struct {
@@ -110,13 +138,26 @@ type apiHandler struct {
 type jsonAPI struct{}
 
 func (api jsonAPI) GetMonkey(id int) (*Monkey, error) {
-	// TODO: query MySQL db here.
-	return nil, fmt.Errorf("TODO: implement getMonkey")
+	db, err := getDB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to contact DB: %v", err)
+	}
+	row := db.QueryRow(`
+      SELECT monkeyName, birthDate
+      FROM monkeys
+      WHERE monkeyId=?`, id)
+	name := ""
+	sec := int64(0)
+	if err = row.Scan(&name, &sec); err != nil {
+		return nil, fmt.Errorf("failed to scan: %v", err)
+	}
+	// Note: If this was exposed to users, we'd need to display it in
+	// their own timezone (explicitly selected).
+	birthdate := time.Unix(sec, 0).UTC()
+	return &Monkey{id, name, birthdate}, nil
 }
 
 func (api jsonAPI) GetMonkeys() (*Monkeys, error) {
-	// TODO: get DB from /services/db/%stage% from etcd, get "host" and "port" keys.
-	// TODO: query MySQL db here.
 	db, err := getDB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to contact DB: %v", err)
@@ -169,13 +210,13 @@ func newRouter(h apiHandler) *mux.Router {
 func (h apiHandler) getMonkeys(w http.ResponseWriter, r *http.Request) {
 	m, err := h.api.GetMonkeys()
 	if err != nil {
-		log.Printf("failed to fetch monkeys: %v", err)
+		glog.Errorf("failed to fetch monkeys: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 	err = json.NewEncoder(w).Encode(m)
 	if err != nil {
-		log.Printf("failed to encode monkeys: %v", err)
+		glog.Errorf("failed to encode monkeys: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
@@ -185,12 +226,12 @@ func (h apiHandler) getMonkeys(w http.ResponseWriter, r *http.Request) {
 func (h apiHandler) createMonkey(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, maxRequestSize))
 	if err != nil {
-		log.Printf("failed to read monkey: %v", err)
+		glog.Errorf("failed to read monkey: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 	if err := r.Body.Close(); err != nil {
-		log.Printf("failed to close request: %v", err)
+		glog.Errorf("failed to close request: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
@@ -199,7 +240,7 @@ func (h apiHandler) createMonkey(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(statusUnprocessableEntity)
 		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Printf("failed to write encoding error: %v", err)
+			glog.Errorf("failed to write encoding error: %v", err)
 			http.Error(w, "Internal server error.", http.StatusInternalServerError)
 			return
 		}
@@ -209,7 +250,7 @@ func (h apiHandler) createMonkey(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(m); err != nil {
-		log.Printf("failed to write encoding error: %v", err)
+		glog.Errorf("failed to write encoding error: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
@@ -224,25 +265,25 @@ func (h apiHandler) getMonkey(w http.ResponseWriter, r *http.Request) {
 	// of database ids, not the raw ids.
 	id, err := strconv.Atoi(vars["key"])
 	if err != nil {
-		log.Printf("bad monkey id %q: %v", vars["key"], err)
+		glog.Errorf("bad monkey id %q: %v", vars["key"], err)
 		http.Error(w, fmt.Sprintf("No such id %q.", vars["key"]), http.StatusBadRequest)
 		return
 	}
 
 	m, err := h.api.GetMonkey(id)
 	if err != nil {
-		log.Printf("failed to fetch monkey: %v", err)
+		glog.Errorf("failed to fetch monkey: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
 	if m == nil {
-		log.Printf("no monkey with id %d\n", id)
+		glog.Errorf("no monkey with id %d\n", id)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	err = json.NewEncoder(w).Encode(m)
 	if err != nil {
-		log.Printf("failed to encode monkey: %v", err)
+		glog.Errorf("failed to encode monkey: %v", err)
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
@@ -251,13 +292,13 @@ func (h apiHandler) getMonkey(w http.ResponseWriter, r *http.Request) {
 // updateMonkey updates a monkey.
 func (h apiHandler) updateMonkey(w http.ResponseWriter, r *http.Request) {
 	msg := "TODO: implement updateMonkey\n"
-	log.Printf(msg)
+	glog.Errorf(msg)
 	http.Error(w, msg, http.StatusInternalServerError)
 }
 
 // deleteMonkey deletes a monkey.
 func (h apiHandler) deleteMonkey(w http.ResponseWriter, r *http.Request) {
 	msg := "TODO: implement deleteMonkey\n"
-	log.Printf(msg)
+	glog.Errorf(msg)
 	http.Error(w, msg, http.StatusInternalServerError)
 }
