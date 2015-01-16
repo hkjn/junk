@@ -5,7 +5,7 @@
 echo "Creating user ${DB_USER} for databases loaded from ${SQL_URL}"
 
 # Import database provided via 'docker run --env
-# url="http://[host]/db.sql"' or via ENV variable in Dockerfile.
+# SQL_URL=http://[host]/db.sql', or via ENV variable in Dockerfile.
 echo "Starting MySQL.."
 /usr/sbin/mysqld &
 # TODO: Do something nicer to wait for DB to come up than just sleeping.
