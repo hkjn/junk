@@ -28,10 +28,6 @@ import (
 )
 
 var (
-	// TODO: pass in etcdctl-read value for -db_addr in .service
-	// file. (we still would need to handle a bad connection by reading
-	// from etcd internally to find the new host, but it would be a
-	// start).
 	dbAddrFlag   = flag.String("db_addr", "", "If set, TCP host for the DB. If not set, address is read from etcd")
 	dbAddr       = ""
 	buildVersion = flag.String("build_version", "unknown revision", "Build version")
@@ -42,6 +38,13 @@ var (
 	stage                           = ""      // prod|staging|testN|dev|unittest
 	maxRequestSize            int64 = 1048576 // largest allowed request, in bytes
 	statusUnprocessableEntity       = 422
+	// Note: From within a container we can't just go to 127.0.0.1:4001 for etcd; we need the docker0 interface's IP:
+	// https://coreos.com/docs/distributed-configuration/getting-started-with-etcd/#reading-and-writing-from-inside-a-container
+	// TODO: refactor to shared code.
+	etcdPeers = []string{
+		"http://172.17.42.1:4001", // on GCE / most others
+		"http://10.1.42.1:4001",   // on Vagrant
+	}
 )
 
 // Monkey is an entity we deal with in the API.
@@ -115,14 +118,8 @@ func Serve() {
 
 // getEtcdHost returns the Host info from etcd.
 func getEtcdHost() (string, error) {
-	//	peers := []string{"http://172.17.42.1:4001", "http://10.1.42.1:4001"}
-	peers := []string{"http://172.17.42.1:4001"}
 	path := fmt.Sprintf("/services/db/%s", stage)
-	c := etcd.NewClient(peers)
-	// TODO: From within a container we can't just go to 127.0.0.1:4001 for etcd; we need the docker0 interface's IP:
-	// https://coreos.com/docs/distributed-configuration/getting-started-with-etcd/#reading-and-writing-from-inside-a-container
-	// Is there something simpler than the following?
-	// ETCD_ENDPOINT="$(ifconfig docker0 | awk '/\<inet\>/ { print $2}'):4001"
+	c := etcd.NewClient(etcdPeers)
 
 	r, err := c.Get(path, false, false)
 	if err != nil {
