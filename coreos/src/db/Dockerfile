@@ -4,7 +4,6 @@ MAINTAINER Henrik Jonsson <me@hkjn.me>
 
 # Install latest updates.
 RUN apt-get update
-RUN apt-get upgrade -y
 
 # Install mysql client and server.
 RUN apt-get -y install mysql-client mysql-server curl
