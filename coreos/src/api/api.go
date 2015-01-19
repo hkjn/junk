@@ -86,7 +86,8 @@ func Serve() {
 
 // getEtcdHost returns the Host info from etcd.
 func getEtcdHost() (string, error) {
-	peers := []string{"http://172.17.42.1:4001", "http://10.1.42.1:4001"}
+	//	peers := []string{"http://172.17.42.1:4001", "http://10.1.42.1:4001"}
+	peers := []string{"http://172.17.42.1:4001"}
 	path := fmt.Sprintf("/services/db/%s", stage)
 	c := etcd.NewClient(peers)
 	// TODO: From within a container we can't just go to 127.0.0.1:4001 for etcd; we need the docker0 interface's IP:
@@ -99,7 +100,7 @@ func getEtcdHost() (string, error) {
 		return "", fmt.Errorf("failed to read etcd path %s from peers %v: %v", path, peers, err)
 	}
 	v := r.Node.Value
-	glog.V(1).Infof("read value %q from %s\n", v, path)
+	glog.Infof("read value %q from %s\n", v, path)
 	addr := struct {
 		Host    string `json:"host"`
 		Port    int    `json:"port"`
@@ -109,17 +110,18 @@ func getEtcdHost() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to interpret etcd value %q: %v", v, err)
 	}
-	return fmt.Sprintf("%s:%s", addr.Host, addr.Port), nil
+	return fmt.Sprintf("%s:%d", addr.Host, addr.Port), nil
 }
 
 func getDB() (*sql.DB, error) {
 	addr := *dbAddr
-	if *dbAddr == "" {
+	if *dbAddr == "" { // TODO: do this only once, not in each API call.
 		var err error
 		addr, err = getEtcdHost()
 		if err != nil {
 			return nil, err
 		}
+		glog.Infof("etcd host: %s\n", addr)
 	}
 	user := ""
 	password := ""
