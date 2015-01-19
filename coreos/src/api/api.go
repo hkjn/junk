@@ -105,7 +105,7 @@ func Serve() {
 	glog.Errorf("FIXME: stage=%s, -build_version=%s, -db_addr=%s\n", stage, *buildVersion, *dbAddrFlag)
 	var err error
 	dbAddr, err = getDBAddr()
-	if err != nil {
+	if err != nil { // TODO: instead serve 503 Service Unavailable and keep trying to find DB.
 		log.Fatalf("FATAL: no DB addr could be found: %v\n", err)
 	}
 	glog.Infof("[%s] api layer for stage %q starting..\n", *buildVersion, stage)
