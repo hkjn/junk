@@ -118,12 +118,11 @@ func Serve() {
 
 // getEtcdHost returns the Host info from etcd.
 func getEtcdHost() (string, error) {
-	path := fmt.Sprintf("/services/db/%s", stage)
 	c := etcd.NewClient(etcdPeers)
-
+	path := fmt.Sprintf("/services/db/%s", stage)
 	r, err := c.Get(path, false, false)
 	if err != nil {
-		return "", fmt.Errorf("failed to read etcd path %s from peers %v: %v", path, peers, err)
+		return "", fmt.Errorf("failed to read etcd path %s from peers %v: %v", path, etcdPeers, err)
 	}
 	v := r.Node.Value
 	glog.Infof("read value %q from %s\n", v, path)
