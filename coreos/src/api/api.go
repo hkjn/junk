@@ -28,7 +28,9 @@ import (
 )
 
 var (
-	dbAddr = flag.String("db_addr", "", "If set, TCP host for the DB. If not set, address is read from etcd")
+	dbAddrFlag   = flag.String("db_addr", "", "If set, TCP host for the DB. If not set, address is read from etcd")
+	dbAddr       = ""
+	buildVersion = flag.String("build_version", "unknown revision", "Build version")
 	// Note that we always bind to the same port inside the container; the
 	// .service file can map it to any external port that's desired
 	// based on which stage we're running.
@@ -73,14 +75,36 @@ func (ms Monkeys) String() string {
 	return r
 }
 
+// getDbAddr returns the DB address, taken from the -db_addr flag if
+// specified, otherwise read from etcd.
+func getDBAddr() (string, error) {
+	if *dbAddrFlag != "" {
+		glog.Infof("-db_addr is specified, so using it: %s\n", *dbAddrFlag)
+		return *dbAddrFlag, nil
+	}
+	addr, err := getEtcdHost()
+	if err != nil {
+		glog.Errorf("failed to get DB address from etcd: %v", err)
+		return "", err
+	}
+	glog.Infof("etcd says DB can be found at: %s\n", addr)
+	return addr, nil
+}
+
 // Serve blocks forever, serving the API on bindAddr.
 func Serve() {
 	flag.Parse()
 	stage = os.Getenv("STAGE")
 	if stage == "" {
-		log.Fatalf("FATAL: no STAGE set as environment variable")
+		log.Fatalln("FATAL: no STAGE set as environment variable")
 	}
-	glog.Infof("api layer for stage %q starting..\n", stage)
+	var err error
+	dbAddr, err = getDBAddr()
+	if err != nil {
+		log.Fatalf("FATAL: no DB addr could be found: %v\n", err)
+	}
+	glog.Infof("[%s] api layer for stage %q starting..\n", *buildVersion, stage)
+	glog.Infof("binding to %s\n", bindAddr)
 	log.Fatal(http.ListenAndServe(bindAddr, newRouter(apiHandler{jsonAPI{}})))
 }
 
@@ -114,15 +138,6 @@ func getEtcdHost() (string, error) {
 }
 
 func getDB() (*sql.DB, error) {
-	addr := *dbAddr
-	if *dbAddr == "" { // TODO: do this only once, not in each API call.
-		var err error
-		addr, err = getEtcdHost()
-		if err != nil {
-			return nil, err
-		}
-		glog.Infof("etcd host: %s\n", addr)
-	}
 	user := ""
 	password := ""
 	// Note: Obviously not secure, in real use we'd have an encrypted
@@ -136,7 +151,7 @@ func getDB() (*sql.DB, error) {
 	}
 	sqlSource := fmt.Sprintf(
 		"%s:%s@tcp(%s)/%s",
-		user, password, addr, "monkeydb")
+		user, password, dbAddr, "monkeydb")
 	glog.V(1).Infof("connecting to MySQL at %s..\n", sqlSource)
 	db, err := sql.Open("mysql", sqlSource)
 	if err != nil {
