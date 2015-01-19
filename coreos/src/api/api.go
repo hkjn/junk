@@ -28,6 +28,10 @@ import (
 )
 
 var (
+	// TODO: pass in etcdctl-read value for -db_addr in .service
+	// file. (we still would need to handle a bad connection by reading
+	// from etcd internally to find the new host, but it would be a
+	// start).
 	dbAddrFlag   = flag.String("db_addr", "", "If set, TCP host for the DB. If not set, address is read from etcd")
 	dbAddr       = ""
 	buildVersion = flag.String("build_version", "unknown revision", "Build version")
@@ -98,6 +102,7 @@ func Serve() {
 	if stage == "" {
 		log.Fatalln("FATAL: no STAGE set as environment variable")
 	}
+	glog.Errorf("FIXME: stage=%s, -build_version=%s, -db_addr=%s\n", stage, *buildVersion, *dbAddrFlag)
 	var err error
 	dbAddr, err = getDBAddr()
 	if err != nil {
