@@ -20,9 +20,11 @@ Setup
 Usage
 ====
 0. SSH to the VMs using `vagrant ssh [name]`:
+
 `$ vagrant ssh core-01`
 
 1. Clone this repository inside the VM:
+
 `$ git clone https://github.com/hkjn/junk`
 
 2. Start some CoreOS services:
