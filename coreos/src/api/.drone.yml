@@ -1,8 +1,0 @@
-image: hkjn/coreosapi
-script:
-  - go build
-  - go test -v
-notify:
-  email:
-    recipients:
-      - henrik+drone@safello.com
