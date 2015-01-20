@@ -4,7 +4,7 @@ coreos:
     metadata: stage=test
   etcd:
     # generate a new token for each unique cluster from https://discovery.etcd.io/new
-    discovery: https://discovery.etcd.io/5feabe99c59164acb78b8d00c7cbbfb
+    discovery: https://discovery.etcd.io/aaabb7690398be8036ee7e04d676a60c
     # multi-region and multi-cloud deployments need to use $public_ipv4
     addr: $public_ipv4:4001
     peer-addr: $public_ipv4:7001
