@@ -7,7 +7,9 @@ TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker kill web-test
 ExecStartPre=-/usr/bin/docker rm web-test
 ExecStartPre=/usr/bin/docker pull hkjn/coreosweb:latest
-ExecStart=/usr/bin/docker run -p 12000:9000 --name web-test --env STAGE=test hkjn/coreosweb:latest -api_server `etcdctl get /services/api/test`
+ExecStart=/usr/bin/bash -c \
+"/usr/bin/docker run -p 12000:9000 --name web-test --env STAGE=test hkjn/coreosweb:latest \
+-api_server `etcdctl get /services/api/test`"
 ExecStop=/usr/bin/docker stop web-test
 
 [X-Fleet]
