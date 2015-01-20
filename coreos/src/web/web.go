@@ -56,7 +56,7 @@ func (h webHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 		return
 	}
-	// TODO: use tmpl?
+	// TODO: use html.tmpl.
 	fmt.Fprintf(w, "<html><body><h1>%s</h1><h2>Here's your monkeys:</h2><p>%s</p></body></html>", msg, m)
 }
 
