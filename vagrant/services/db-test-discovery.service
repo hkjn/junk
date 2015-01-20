@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce test MySQL DB
+BindsTo=db-test.service
+After=db-test.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /services/db/test $(ip addr list eth0|grep 'inet ' | cut -d' ' -f6 | cut -d/ -f1):3310 --ttl 60; sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /services/db/test
+
+[X-Fleet]
+MachineOf=db-test.service

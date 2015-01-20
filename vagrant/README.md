@@ -31,8 +31,15 @@ Usage
 
 2. Start some CoreOS services:
 ```
-$ cd junk/coreos/services
+$ cd junk/vagrant/services
 $ fleetctl start db-test*.service
 $ fleetctl start api-test*.service
 $ fleetctl start web-test*.service
 ```
+
+TODO
+====
+Figure out why hostname resolution isn't working on vagrant VMs
+(foo-discovery.service files need a cumbersome sequence of commands to
+figure out the eth0 IP without it):
+https://github.com/coreos/coreos-vagrant/issues/196
