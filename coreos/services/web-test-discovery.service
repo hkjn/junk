@@ -4,7 +4,7 @@ BindsTo=web-test.service
 After=web-test.service
 
 [Service]
-ExecStart=/bin/sh -c "while true; do etcdctl set /services/web/test %H:9000 --ttl 60;sleep 45;done"
+ExecStart=/bin/sh -c "while true; do etcdctl set /services/web/test %H:12000 --ttl 60;sleep 45;done"
 ExecStop=/usr/bin/etcdctl rm /services/web/test
 
 [X-Fleet]
