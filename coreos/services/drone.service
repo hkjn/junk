@@ -10,7 +10,7 @@ ExecStartPre=/usr/bin/docker pull hkjn/drone
 # We mount a .sqlite file outside the container so we can persist data.
 # TODO: backup drone.sqlite.
 ExecStart=/usr/bin/bash -c \
-  "/usr/bin/docker run -d --name=drone \
+  "/usr/bin/docker run --name=drone \
   --env DRONE_GITHUB_CLIENT=$(etcdctl get /drone/key) \
   --env DRONE_GITHUB_SECRET=$(etcdctl get /drone/secret) \
   -p 8080:8080 \
