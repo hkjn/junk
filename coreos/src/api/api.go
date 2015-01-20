@@ -126,16 +126,12 @@ func getEtcdHost() (string, error) {
 	}
 	v := r.Node.Value
 	glog.Infof("read value %q from %s\n", v, path)
-	addr := struct {
-		Host    string `json:"host"`
-		Port    int    `json:"port"`
-		Version string `json:"version"`
-	}{}
+	addr := ""
 	err = json.Unmarshal([]byte(v), &addr)
 	if err != nil {
 		return "", fmt.Errorf("failed to interpret etcd value %q: %v", v, err)
 	}
-	return fmt.Sprintf("%s:%d", addr.Host, addr.Port), nil
+	return addr, nil
 }
 
 func getDB() (*sql.DB, error) {

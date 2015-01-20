@@ -4,7 +4,7 @@ BindsTo=db-test.service
 After=db-test.service
 
 [Service]
-ExecStart=/bin/sh -c "while true; do etcdctl set /services/db/test '{ \"host\": \"%H\", \"port\": 3310, \"version\": \"foobar\" }' --ttl 60;sleep 45;done"
+ExecStart=/bin/sh -c "while true; do etcdctl set /services/db/test %H:3310 --ttl 60;sleep 45;done"
 ExecStop=/usr/bin/etcdctl rm /services/db/test
 
 [X-Fleet]
