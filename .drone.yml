@@ -1,7 +1,7 @@
 image: hkjn/coreosapi
 script:
-  - go build
-  - go test -v
+  - go build -v ./...
+  - go test -v ./...
 notify:
   email:
     recipients:
