@@ -49,7 +49,7 @@ UNIT                                    MACHINE                         ACTIVE  
 api-test-discovery-vagrant.service      5aa6ca00.../172.17.8.101        active  running
 api-test.service                        5aa6ca00.../172.17.8.101        active  running
 datadog.service                         5aa6ca00.../172.17.8.101        active  running
-db-test-discovery.service               5aa6ca00.../172.17.8.101        active  running
+db-test-discovery-vagrant.service       5aa6ca00.../172.17.8.101        active  running
 db-test.service                         5aa6ca00.../172.17.8.101        active  running
 web-test-discovery-vagrant.service      5aa6ca00.../172.17.8.101        active  running
 web-test.service                        5aa6ca00.../172.17.8.101        active  running
@@ -90,12 +90,14 @@ Jan 20 16:09:11 core-01 bash[9276]: [web.v1d8d6af] web layer for stage "test" bi
 
 TODO
 ====
-Figure out why hostname resolution isn't working on vagrant VMs;
-*-discovery.service files need a cumbersome sequence of commands to
-figure out the eth0 IP without it, so I've forked out
-*-discovery-vagrant.service files since this works fine on GCE. Filed
-https://github.com/coreos/coreos-vagrant/issues/196 to get an answer
-from CoreOS folks. Alternatively, this incantation should work to dig
-out the IP for the appropriate network interface for all machine
-types, if we need to live with this state:
- ip addr list | grep 'inet.*scope global' | head -n 1 | cut -d ' ' -f 6 | cut -d/ -f1
+- Figure out why hostname resolution isn't working on vagrant VMs; as a
+  result `foo-discovery.service` files need a cumbersome sequence of
+  commands to figure out the `eth0` IP, so I've forked out
+  `foo-discovery-vagrant.service` files since this works fine on
+  GCE. Filed https://github.com/coreos/coreos-vagrant/issues/196 to get
+  an answer from CoreOS folks. Alternatively, this incantation should
+  work to dig out the IP for the appropriate network interface for all
+  machine types, if we need to live with this state:
+  ```
+  $ ip addr list | grep 'inet.*scope global' | head -n 1 | cut -d ' ' -f 6 | cut -d/ -f1
+  ```
