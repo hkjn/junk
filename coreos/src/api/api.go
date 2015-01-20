@@ -102,10 +102,10 @@ func getDBAddr() (string, error) {
 func Serve() {
 	flag.Parse()
 	stage = os.Getenv("STAGE")
+	glog.V(2).Infof("api starting with stage=%s, -build_version=%s, -db_addr=%s\n", stage, *buildVersion, *dbAddrFlag)
 	if stage == "" {
 		log.Fatalln("FATAL: no STAGE set as environment variable")
 	}
-	glog.Errorf("FIXME: stage=%s, -build_version=%s, -db_addr=%s\n", stage, *buildVersion, *dbAddrFlag)
 	var err error
 	dbAddr, err = getDBAddr()
 	if err != nil { // TODO: instead serve 503 Service Unavailable and keep trying to find DB.
