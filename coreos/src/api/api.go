@@ -108,8 +108,8 @@ func Serve() {
 	}
 	var err error
 	dbAddr, err = getDBAddr()
-	if err != nil { // TODO: instead serve 503 Service Unavailable and keep trying to find DB.
-		log.Fatalf("FATAL: no DB addr could be found: %v\n", err)
+	if err != nil {
+		glog.Warningf("no DB addr could be found at startup: %v\n", err)
 	}
 	glog.Infof("[%s] api layer for stage %q starting..\n", *buildVersion, stage)
 	glog.Infof("binding to %s\n", bindAddr)
@@ -183,6 +183,7 @@ func (api jsonAPI) GetMonkey(id int) (*Monkey, error) {
 	return &Monkey{id, name, birthdate}, nil
 }
 
+// GetMonkeys returns all monkeys in the DB.
 func (api jsonAPI) GetMonkeys() (*Monkeys, error) {
 	db, err := getDB()
 	if err != nil {
@@ -227,7 +228,7 @@ func newRouter(h apiHandler) *mux.Router {
 	r.HandleFunc("/monkeys", h.getMonkeys).Methods("GET")
 	r.HandleFunc("/monkeys", h.createMonkey).Methods("POST")
 	r.HandleFunc("/monkeys/{key}", h.getMonkey).Methods("GET")
-	r.HandleFunc("/monkey/{key}", h.updateMonkey).Methods("PUT")
+	r.HandleFunc("/monkeys/{key}", h.updateMonkey).Methods("PUT")
 	r.HandleFunc("/monkeys/{key}", h.deleteMonkey).Methods("DELETE")
 	return r
 }
@@ -237,7 +238,7 @@ func (h apiHandler) getMonkeys(w http.ResponseWriter, r *http.Request) {
 	m, err := h.api.GetMonkeys()
 	if err != nil {
 		glog.Errorf("failed to fetch monkeys: %v", err)
-		http.Error(w, "Internal server error.", http.StatusInternalServerError)
+		http.Error(w, "Not ready to serve.", http.StatusServiceUnavailable)
 		return
 	}
 	err = json.NewEncoder(w).Encode(m)
@@ -272,7 +273,11 @@ func (h apiHandler) createMonkey(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	err = h.api.AddMonkey(m)
+	if err = h.api.AddMonkey(m); err != nil {
+		glog.Errorf("failed to add monkey to DB: %v", err)
+		http.Error(w, "Not ready to serve.", http.StatusServiceUnavailable)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(m); err != nil {
@@ -298,8 +303,11 @@ func (h apiHandler) getMonkey(w http.ResponseWriter, r *http.Request) {
 
 	m, err := h.api.GetMonkey(id)
 	if err != nil {
+		// TODO: We could be more discriminating with the type of error
+		// here - API could also have a bug or otherwise fail internally
+		// for reasons that do not correspond to having an unreachable DB.
 		glog.Errorf("failed to fetch monkey: %v", err)
-		http.Error(w, "Internal server error.", http.StatusInternalServerError)
+		http.Error(w, "Not ready to serve.", http.StatusServiceUnavailable)
 		return
 	}
 	if m == nil {
