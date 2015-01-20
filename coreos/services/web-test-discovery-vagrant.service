@@ -4,7 +4,7 @@ BindsTo=web-test.service
 After=web-test.service
 
 [Service]
-ExecStart=/bin/sh -c "while true; do etcdctl set /services/web/test $(ip addr list eth0|grep 'inet ' | cut -d' ' -f6 | cut -d/ -f1):3310 --ttl 60; sleep 45;done"
+ExecStart=/bin/sh -c "while true; do etcdctl set /services/web/test $(ip addr list eth0|grep 'inet ' | cut -d' ' -f6 | cut -d/ -f1):9000 --ttl 60; sleep 45;done"
 ExecStop=/usr/bin/etcdctl rm /services/web/test
 
 [X-Fleet]
