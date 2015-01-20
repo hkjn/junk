@@ -9,7 +9,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/golang/glog"
+
 	"hkjn.me/junk/coreos/src/api"
+	"hkjn.me/junk/coreos/src/etcdwrapper"
 )
 
 var (
@@ -56,19 +59,22 @@ func (h webHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<html><body><h1>%s</h1><p>%s</p></body></html>", msg, m)
 }
 
-// getURL returns the URL for specific API endpoint.
+// getURL returns the URL for a specific API endpoint.
 //
 // getURL uses specified value from -api_server if present, otherwise
 // reads /services/api/[stage] from etcd.
-func (p jsonAPI) getURL(endpoint string) string {
-	if *apiServer == "" {
-		// TODO: read /services/api/%stage% from etcd, get "host" and "port" keys
-		// TODO: cache value or read each time?
-		log.Fatalf("not implemented yet\n")
-		return ""
-	} else {
-		return fmt.Sprintf("%s/%s", *apiServer, endpoint)
+func (p jsonAPI) getURL(endpoint string) (string, error) {
+	server := *apiServer
+	if server == "" {
+		addr, err := etcdwrapper.Read(fmt.Sprintf("/services/api/%s", stage))
+		if err != nil {
+			glog.Errorf("failed to get API server from etcd: %v", err)
+			return "", err
+		}
+		glog.Infof("etcd says API server can be found at: %s\n", addr)
+		server = addr
 	}
+	return fmt.Sprintf("%s/%s", server, endpoint), nil
 }
 
 func (p jsonAPI) GetMonkey(id int) (*api.Monkey, error) {
@@ -77,7 +83,13 @@ func (p jsonAPI) GetMonkey(id int) (*api.Monkey, error) {
 }
 
 func (p jsonAPI) GetMonkeys() (*api.Monkeys, error) {
-	r, err := http.Get(p.getURL("/monkeys"))
+	target, err := p.getURL("/monkeys")
+	if err != nil {
+		// TODO: Should return 503 Service Unavailable here - only can
+		// happen if etcd doesn't know about our API backend.
+		return nil, fmt.Errorf("failed to find URL: %v", err)
+	}
+	r, err := http.Get(target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GET /monkeys: %v", err)
 	}

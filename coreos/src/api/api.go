@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang/glog"
+	"github.com/gorilla/mux"
 
 	"encoding/json"
 	"flag"
@@ -23,8 +24,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/coreos/go-etcd/etcd"
-	"github.com/gorilla/mux"
+	"hkjn.me/junk/coreos/src/etcdwrapper"
 )
 
 var (
@@ -40,11 +40,6 @@ var (
 	statusUnprocessableEntity       = 422
 	// Note: From within a container we can't just go to 127.0.0.1:4001 for etcd; we need the docker0 interface's IP:
 	// https://coreos.com/docs/distributed-configuration/getting-started-with-etcd/#reading-and-writing-from-inside-a-container
-	// TODO: refactor to shared code.
-	etcdPeers = []string{
-		"http://172.17.42.1:4001", // on GCE / most others
-		"http://10.1.42.1:4001",   // on Vagrant
-	}
 )
 
 // Monkey is an entity we deal with in the API.
@@ -86,10 +81,10 @@ func (ms Monkeys) String() string {
 // specified, otherwise read from etcd.
 func getDBAddr() (string, error) {
 	if *dbAddrFlag != "" {
-		glog.Infof("-db_addr is specified, so using it: %s\n", *dbAddrFlag)
+		glog.V(2).Infof("-db_addr is specified, so using it: %s\n", *dbAddrFlag)
 		return *dbAddrFlag, nil
 	}
-	addr, err := getEtcdHost()
+	addr, err := etcdwrapper.Read(fmt.Sprintf("/services/db/%s", stage))
 	if err != nil {
 		glog.Errorf("failed to get DB address from etcd: %v", err)
 		return "", err
@@ -114,24 +109,6 @@ func Serve() {
 	glog.Infof("[%s] api layer for stage %q starting..\n", *buildVersion, stage)
 	glog.Infof("binding to %s\n", bindAddr)
 	log.Fatal(http.ListenAndServe(bindAddr, newRouter(apiHandler{jsonAPI{}})))
-}
-
-// getEtcdHost returns the Host info from etcd.
-func getEtcdHost() (string, error) {
-	c := etcd.NewClient(etcdPeers)
-	path := fmt.Sprintf("/services/db/%s", stage)
-	r, err := c.Get(path, false, false)
-	if err != nil {
-		return "", fmt.Errorf("failed to read etcd path %s from peers %v: %v", path, etcdPeers, err)
-	}
-	v := r.Node.Value
-	glog.Infof("read value %q from %s\n", v, path)
-	addr := ""
-	err = json.Unmarshal([]byte(v), &addr)
-	if err != nil {
-		return "", fmt.Errorf("failed to interpret etcd value %q: %v", v, err)
-	}
-	return addr, nil
 }
 
 func getDB() (*sql.DB, error) {
