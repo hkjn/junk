@@ -1,0 +1,20 @@
+[Unit]
+Description=Drone.io continuous integration
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill drone
+ExecStartPre=-/usr/bin/docker rm drone
+ExecStartPre=/usr/bin/docker pull hkjn/drone
+# Note that the API key needs to have been set (on any machine) with etcdctl set /drone/key|secret [value].
+# We mount a .sqlite file outside the container so we can persist data.
+# TODO: backup drone.sqlite.
+ExecStart=/usr/bin/bash -c \
+  "/usr/bin/docker run -d --name=drone \
+  --env DRONE_GITHUB_CLIENT=$(etcdctl get /drone/key) \
+  --env DRONE_GITHUB_SECRET=$(etcdctl get /drone/secret) \
+  -p 8080:8080 \
+  -v /var/lib/drone/ \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /home/core/droneio/drone.sqlite:/var/lib/drone/drone.sqlite \
+  hkjn/drone:latest"
