@@ -57,7 +57,7 @@ func (h webHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// TODO: use tmpl?
-	fmt.Fprintf(w, "<html><body><h1>%s</h1><p>%s</p></body></html>", msg, m)
+	fmt.Fprintf(w, "<html><body><h1>%s</h1><h2>Here's your monkeys:</h2><p>%s</p></body></html>", msg, m)
 }
 
 // getURL returns the URL for a specific API endpoint.
