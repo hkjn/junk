@@ -17,7 +17,7 @@ import (
 
 var (
 	apiServer    = flag.String("api_server", "", "If set, HTTP address of API server. If not set, address is read from etcd")
-	buildVersion = flag.String("build_version", "unknown revision", "Build version")
+	buildVersion = flag.String("web_version", "unknown revision", "Build version of web server")
 	// Note that we always bind to the same port internally; the
 	// .service file can map it to any external port that's desired
 	// based on which stage we're running.
@@ -112,7 +112,7 @@ func (p jsonAPI) AddMonkey(m api.Monkey) error {
 func main() {
 	flag.Parse()
 	stage = os.Getenv("STAGE")
-	glog.V(2).Infof("web starting with stage=%s, -build_version=%s, -api_server=%s\n", stage, *buildVersion, *apiServer)
+	glog.V(2).Infof("web starting with stage=%s, -web_version=%s, -api_server=%s\n", stage, *buildVersion, *apiServer)
 	if stage == "" {
 		log.Fatalf("FATAL: no STAGE set as environment variable")
 	}

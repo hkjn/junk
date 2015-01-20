@@ -30,7 +30,7 @@ import (
 var (
 	dbAddrFlag   = flag.String("db_addr", "", "If set, TCP host for the DB. If not set, address is read from etcd")
 	dbAddr       = ""
-	buildVersion = flag.String("build_version", "unknown revision", "Build version")
+	buildVersion = flag.String("api_version", "unknown revision", "Build version of API server")
 	// Note that we always bind to the same port inside the container; the
 	// .service file can map it to any external port that's desired
 	// based on which stage we're running.

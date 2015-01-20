@@ -9,7 +9,7 @@
 # instead.
 #
 VERSION=api.v$(git rev-parse --short HEAD)
-sed -i "s/-build_version api.v.*\b/-build_version ${VERSION}/" Dockerfile
+sed -i "s/-api_version api.v.*\b/-api_version ${VERSION}/" Dockerfile
 docker build --no-cache -t hkjn/coreosapi:latest .
 docker push hkjn/coreosapi:latest
 
