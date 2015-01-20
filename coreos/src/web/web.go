@@ -64,7 +64,7 @@ func (h webHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 //
 // getURL uses specified value from -api_server if present, otherwise
 // reads /services/api/[stage] from etcd.
-func (p jsonAPI) getURL(endpoint string) (string, error) {
+func getURL(endpoint string) (string, error) {
 	server := *apiServer
 	if server == "" {
 		addr, err := etcdwrapper.Read(fmt.Sprintf("/services/api/%s", stage))
@@ -75,7 +75,7 @@ func (p jsonAPI) getURL(endpoint string) (string, error) {
 		glog.Infof("etcd says API server can be found at: %s\n", addr)
 		server = addr
 	}
-	return fmt.Sprintf("%s/%s", server, endpoint), nil
+	return fmt.Sprintf("http://%s%s", server, endpoint), nil
 }
 
 func (p jsonAPI) GetMonkey(id int) (*api.Monkey, error) {
@@ -84,7 +84,7 @@ func (p jsonAPI) GetMonkey(id int) (*api.Monkey, error) {
 }
 
 func (p jsonAPI) GetMonkeys() (*api.Monkeys, error) {
-	target, err := p.getURL("/monkeys")
+	target, err := getURL("/monkeys")
 	if err != nil {
 		// TODO: Should return 503 Service Unavailable here - only can
 		// happen if etcd doesn't know about our API backend.
@@ -116,7 +116,7 @@ func main() {
 	if stage == "" {
 		log.Fatalf("FATAL: no STAGE set as environment variable")
 	}
-	fmt.Printf("[%s] web layer for stage %q starting..\n", *buildVersion, stage)
+	fmt.Printf("[%s] web layer for stage %q binding to %s..\n", *buildVersion, stage, bindAddr)
 	http.Handle("/", webHandler{jsonAPI{}})
 	log.Fatal(http.ListenAndServe(bindAddr, nil))
 }

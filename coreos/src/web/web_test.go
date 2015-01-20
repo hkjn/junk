@@ -30,6 +30,26 @@ func (fakeAPI) AddMonkey(m api.Monkey) error {
 	return fmt.Errorf("bad request: unexpected AddMonkey call")
 }
 
+func TestGetURL(t *testing.T) {
+	stage = "unittest"
+	*apiServer = "FAKE_API_SERVER"
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{"/", "http://FAKE_API_SERVER/"},
+		{"/monkeys", "http://FAKE_API_SERVER/monkeys"},
+	}
+	for i, tt := range cases {
+		got, err := getURL(tt.in)
+		if err != nil {
+			t.Errorf("[%d] getURL(%q) got error %v, want %v\n", i, tt.in, err, tt.want)
+		} else if got != tt.want {
+			t.Errorf("[%d] getURL(%q) got %v, want %v\n", i, tt.in, got, tt.want)
+		}
+	}
+}
+
 func TestWeb(t *testing.T) {
 	stage = "unittest"
 	h := webHandler{fakeAPI{}}

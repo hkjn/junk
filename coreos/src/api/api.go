@@ -106,8 +106,7 @@ func Serve() {
 	if err != nil {
 		glog.Warningf("no DB addr could be found at startup: %v\n", err)
 	}
-	glog.Infof("[%s] api layer for stage %q starting..\n", *buildVersion, stage)
-	glog.Infof("binding to %s\n", bindAddr)
+	glog.Infof("[%s] api layer for stage %q binding to %s..\n", *buildVersion, stage, bindAddr)
 	log.Fatal(http.ListenAndServe(bindAddr, newRouter(apiHandler{jsonAPI{}})))
 }
 
