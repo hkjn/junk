@@ -26,7 +26,8 @@ Usage
 `$ git clone https://github.com/hkjn/junk`
 
 2. Start some CoreOS services:
-```$ cd junk/coreos/services
+```
+$ cd junk/coreos/services
 $ fleetctl start db-test*.service
 $ fleetctl start api-test*.service
 $ fleetctl start web-test*.service
