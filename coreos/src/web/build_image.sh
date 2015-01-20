@@ -8,5 +8,7 @@
 # at the appropriate point in the Dockerfile by using a unique command
 # instead.
 #
+VERSION=api.v$(git rev-parse --short HEAD)
+sed -i "s/-build_version web.v.*\b/-build_version ${VERSION}/" Dockerfile
 docker build --no-cache -t hkjn/coreosweb:latest .
 docker push hkjn/coreosweb:latest
