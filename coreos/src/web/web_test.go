@@ -68,7 +68,7 @@ func TestWeb(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read body: %v\n", err)
 	}
-	want := "<html><body><h1>Yes, automatic tester, I'm working as intended.</h1><p>Noel (6) was born on Tue, 21 Feb 2006, Ethan (14) was born on Thu, 02 Dec 2010</p></body></html>"
+	want := "<html><body><h1>Yes, automatic tester, I'm working as intended.</h1><h2>Here's your monkeys:</h2><p>Noel (6) was born on Tue, 21 Feb 2006, Ethan (14) was born on Thu, 02 Dec 2010</p></body></html>"
 	got := string(b)
 	if got != want {
 		t.Fatalf("want response %q, got %q\n", want, got)
