@@ -12,8 +12,8 @@ ExecStartPre=-/usr/bin/docker kill web-prod
 ExecStartPre=-/usr/bin/docker rm web-prod
 ExecStartPre=/usr/bin/docker pull hkjn/coreosweb:latest
 ExecStart=/usr/bin/bash -c \
-"/usr/bin/docker run -p 9000:80 --name web-prod --env STAGE=prod hkjn/coreosweb:latest \
-`etcdctl get /services/api/prod`"
+  "/usr/bin/docker run -p 80:9000 --name web-prod --env STAGE=prod hkjn/coreosweb:latest \
+    -api_server $(etcdctl get /services/api/prod)"
 ExecStop=/usr/bin/docker stop web-prod
 
 [X-Fleet]
