@@ -1,6 +1,7 @@
 [Unit]
 Description=Announce test API server
 BindsTo=api-test.service
+Requires=api-test.service
 After=api-test.service
 
 [Service]

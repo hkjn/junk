@@ -1,6 +1,7 @@
 [Unit]
 Description=Announce test MySQL DB
 BindsTo=db-test.service
+Requires=db-test.service
 After=db-test.service
 
 [Service]

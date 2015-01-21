@@ -1,5 +1,8 @@
 [Unit]
 Description=Test MySQL DB
+Requires=etcd.service
+Requires=docker.service
+After=etcd.service
 After=docker.service
 
 [Service]

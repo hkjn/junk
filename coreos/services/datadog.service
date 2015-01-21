@@ -1,5 +1,9 @@
 [Unit]
 Description=Datadog Monitoring Service
+Requires=etcd.service
+Requires=docker.service
+After=etcd.service
+After=docker.service
 
 [Service]
 TimeoutStartSec=0

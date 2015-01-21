@@ -1,5 +1,9 @@
 [Unit]
 Description=Drone.io continuous integration
+Requires=etcd.service
+Requires=docker.service
+After=etcd.service
+After=docker.service
 
 [Service]
 TimeoutStartSec=0

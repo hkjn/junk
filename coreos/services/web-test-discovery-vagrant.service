@@ -1,6 +1,7 @@
 [Unit]
 Description=Announce test web server
 BindsTo=web-test.service
+Requires=web-test.service
 After=web-test.service
 
 [Service]
