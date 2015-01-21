@@ -4,6 +4,7 @@ After=docker.service
 
 [Service]
 TimeoutStartSec=0
+Restart=always
 ExecStartPre=-/usr/bin/docker kill db-test
 ExecStartPre=-/usr/bin/docker rm db-test
 ExecStartPre=/usr/bin/docker pull hkjn/coreosdb:latest

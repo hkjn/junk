@@ -3,6 +3,7 @@ Description=Drone.io continuous integration
 
 [Service]
 TimeoutStartSec=0
+Restart=always
 ExecStartPre=-/usr/bin/docker kill drone
 ExecStartPre=-/usr/bin/docker rm drone
 ExecStartPre=/usr/bin/docker pull hkjn/drone
@@ -11,14 +12,13 @@ ExecStartPre=/usr/bin/docker pull hkjn/drone
 # TODO: backup drone.sqlite.
 ExecStart=/usr/bin/bash -c \
   "/usr/bin/docker run --name=drone \
-  --env DRONE_GITHUB_CLIENT=$(etcdctl get /drone/key) \
-  --env DRONE_GITHUB_SECRET=$(etcdctl get /drone/secret) \
-  -p 8080:8080 \
-  -v /var/lib/drone/ \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /home/core/droneio/drone.sqlite:/var/lib/drone/drone.sqlite \
-  hkjn/drone:latest"
-
+    --env DRONE_GITHUB_CLIENT=$(etcdctl get /drone/key) \
+    --env DRONE_GITHUB_SECRET=$(etcdctl get /drone/secret) \
+    -p 8080:8080 \
+    -v /var/lib/drone/ \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /home/core/droneio/drone.sqlite:/var/lib/drone/drone.sqlite \
+    hkjn/drone:latest"
 # TODO: We need to ensure that drone runs on the same IP or host as is
 # specified in the https://github.com/settings/applications/ page, so
 # either specify X-Fleet directives to lock it to one machine or otherwise handle it.
