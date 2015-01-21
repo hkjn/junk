@@ -3,6 +3,7 @@ package main
 
 import (
 	"encoding/json"
+	"expvar"
 	"flag"
 	"fmt"
 	"log"
@@ -16,7 +17,8 @@ import (
 )
 
 var (
-	apiServer    = flag.String("api_server", "", "If set, HTTP address of API server. If not set, address is read from etcd")
+	apiServer = flag.String("api_server", "", "If set, HTTP address of API server. If not set, address is read from etcd")
+	// TODO: expose -web_version as expvar so Datadog can graph it.
 	buildVersion = flag.String("web_version", "unknown revision", "Build version of web server")
 	// Note that we always bind to the same port internally; the
 	// .service file can map it to any external port that's desired
@@ -52,8 +54,11 @@ func (h webHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	m, err := h.p.GetMonkeys()
 	if err != nil {
+		// TODO: We could be more discriminating with the type of error
+		// here - API could also have a bug or otherwise fail internally
+		// for reasons that do not correspond to having an unreachable DB.
 		log.Printf("Error from API: %v\n", err)
-		http.Error(w, "Internal server error.", http.StatusInternalServerError)
+		http.Error(w, "Not ready to serve.", http.StatusServiceUnavailable)
 		return
 	}
 	// TODO: use html.tmpl.
@@ -86,8 +91,6 @@ func (p jsonAPI) GetMonkey(id int) (*api.Monkey, error) {
 func (p jsonAPI) GetMonkeys() (*api.Monkeys, error) {
 	target, err := getURL("/monkeys")
 	if err != nil {
-		// TODO: Should return 503 Service Unavailable here - only can
-		// happen if etcd doesn't know about our API backend.
 		return nil, fmt.Errorf("failed to find URL: %v", err)
 	}
 	r, err := http.Get(target)
@@ -117,6 +120,11 @@ func main() {
 		log.Fatalf("FATAL: no STAGE set as environment variable")
 	}
 	fmt.Printf("[%s] web layer for stage %q binding to %s..\n", *buildVersion, stage, bindAddr)
+	expvar.NewString("build_version").Set(*buildVersion)
+
+	// TODO: Since we import expvar, we will serve internal state at
+	// /debug/vars. If this really was an externally-facing web server,
+	// we should not be exposing such low-level details to users.
 	http.Handle("/", webHandler{jsonAPI{}})
 	log.Fatal(http.ListenAndServe(bindAddr, nil))
 }
