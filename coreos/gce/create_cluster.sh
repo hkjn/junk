@@ -4,8 +4,8 @@
 #
 PROJECT_NAME=henrik-jonsson # GCE project, with billing enabled
 ZONE=europe-west1-b         # GCE zone
-#MACHINE_TYPE=f1-micro       # GCE machine type
-MACHINE_TYPE=n1-standard-1
+MACHINE_TYPE=f1-micro       # GCE machine type
+#MACHINE_TYPE=n1-standard-1
 # All valid images can be shown with:
 # gcloud compute images list --project coreos-cloud
 gcloud compute --project ${PROJECT_NAME} instances create core1 core2 \
