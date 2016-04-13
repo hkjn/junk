@@ -1,0 +1,32 @@
+[Unit]
+Description=FOSS Registry service
+Requires=etcd2.service
+Requires=docker.service
+# TODO(hkjn): Add redis and other backends here, if we use them.
+# Requires=registry-db.service
+# Requires=registry-redis.service
+
+After=etcd2.service
+After=docker.service
+# After=registry-db.service
+# After=registry-redis.service
+
+# TODO(hkjn): Set up registry-foss-nginx.service to terminate TLS.
+[Service]
+User=core
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker kill registry-foss
+ExecStartPre=-/usr/bin/docker rm registry-foss
+ExecStartPre=/usr/bin/docker pull hkjn/registry-foss
+ExecStart=/bin/bash -c '/usr/bin/docker
+	run --name registry-foss \
+	    -p $(etcdctl get /ports/registry-foss):$(etcdctl get /ports/registry-foss) \
+	    -e REGISTRY_URL="http://172.17.42.1:$(etcdctl get /ports/registry-foss)" \
+	    -e REGISTRY_SECRET="adevsecret" \
+	    -v /var/lib/registry:/var/lib/registry \
+	    hkjn/registry-foss
+ExecStop=/usr/bin/docker stop registry-foss
+
+[X-Fleet]
+MachineMetadata=registry-foss-host=1

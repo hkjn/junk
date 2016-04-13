@@ -1,0 +1,24 @@
+[Unit]
+Description=Nginx load balancer for registry.io
+Requires=docker.service
+Requires=etcd2.service
+After=docker.service
+After=etcd2.service
+
+[Service]
+User=core
+TimeoutStartSec=0
+RestartSec=10
+Restart=always
+ExecStartPre=-/usr/bin/docker kill registry-nginx
+ExecStartPre=-/usr/bin/docker rm registry-nginx
+ExecStartPre=/usr/bin/docker pull hkjn/registry-nginx
+ExecStart=/bin/bash -c '/usr/bin/docker run \
+    --name registry-nginx \
+    -p 443:443 \
+    -v /etc/ssl/bpoc:/etc/ssl:ro \
+    hkjn/registry-nginx'
+ExecStop=/usr/bin/docker stop bpoc-nginx
+
+[X-Fleet]
+Conflicts=*-nginx.service
