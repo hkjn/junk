@@ -10,7 +10,9 @@ public class Greeting {
 
 	public Greeting(long id, String content) {
 		System.out.println("FIXMEH: Greeting()");
-		LOG.info("FIXMEH: info()");
+		LOG.info("FIXMEH: info() logging says {} from {}", "hi", this);
+		LOG.error("FIXMEH: error()");
+		LOG.debug("FIXMEH: debug()");
 		this.id = id;
 		this.content = content;
 	}
