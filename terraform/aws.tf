@@ -35,64 +35,26 @@ resource "aws_route" "tf_public_gateway_route" {
   gateway_id = "${aws_internet_gateway.tf_igw.id}"
 }
 
-resource "aws_subnet" "tf_subnet_1" {
-  #vpc_id = "vpc-1f8bab7a"
+resource "aws_subnet" "tf_subnets" {
   vpc_id = "${aws_vpc.tf_vpc.id}"
-  cidr_block = "10.0.40.0/26"
-  availability_zone = "eu-west-1a"
+  cidr_block = "${element(split(",", var.public_ranges), count.index)}"
+  availability_zone = "${element(split(",", var.azs), count.index)}"
+  count = "${length(compact(split(",", var.public_ranges)))}"
   tags {
-    Name = "tf_subnet_1"
+    Name = "${var.env}_tf_subnet_${count.index}"
   }
   map_public_ip_on_launch = true
 }
 
-resource "aws_subnet" "tf_subnet_2" {
-  vpc_id = "${aws_vpc.tf_vpc.id}"
-  cidr_block = "10.0.40.65/26"
-  availability_zone = "eu-west-1b"
-  tags {
-    Name = "tf_subnet_2"
-  }
-  map_public_ip_on_launch = true
-}
-
-resource "aws_subnet" "tf_subnet_3" {
-  vpc_id = "${aws_vpc.tf_vpc.id}"
-  cidr_block = "10.0.40.130/26"
-  availability_zone = "eu-west-1c"
-  tags {
-    Name = "tf_subnet_3"
-  }
-  map_public_ip_on_launch = true
-}
-
-resource "aws_route_table_association" "tf_associate_route_1" {
-  subnet_id = "${aws_subnet.tf_subnet_1.id}"
-  route_table_id = "${aws_route_table.tf_public_routes.id}"
-  #"rtb-c4bbb5a1"
-}
-
-resource "aws_route_table_association" "tf_associate_route_2" {
-  subnet_id = "${aws_subnet.tf_subnet_2.id}"
+resource "aws_route_table_association" "tf_public_routes" {
+  count = "${length(compact(split(",", var.public_ranges)))}"
+  subnet_id = "${element(aws_subnet.tf_subnets.*.id, count.index)}"
   route_table_id = "${aws_route_table.tf_public_routes.id}"
 }
-
-resource "aws_route_table_association" "tf_associate_route_3" {
-  subnet_id = "${aws_subnet.tf_subnet_3.id}"
-  route_table_id = "${aws_route_table.tf_public_routes.id}"
-}
-
-#resource "aws_route" "tf_route_1" {
-#  route_table_id = "rtb-c4bbb5a1"
-#  # destination_cidr_block = "10.0.20.0/24"
-#  destination_cidr_block = "0.0.0.0/0"
-#  gateway_id = "igw-70355415"
-#}
 
 resource "aws_security_group" "allow_ping" {
   name = "Allow ping"
   vpc_id = "${aws_vpc.tf_vpc.id}"
-  # vpc_id = "vpc-1f8bab7a"
   ingress {
     # Allow ICMP ECHO:
     # https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-codes-8
@@ -139,50 +101,54 @@ resource "aws_security_group" "allow_outbound" {
   }
 }
 
-resource "aws_eip" "ip" {
-  instance = "${aws_instance.tf-core-1.id}"
-}
-
-resource "aws_instance" "tf-core-1" {
+resource "aws_instance" "tf_k8s_master" {
+  key_name          = "hkjn-key-1"
   ami               = "ami-82b5f5f1"
+  subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 0)}"
   availability_zone = "eu-west-1a"
-  instance_type     = "t2.micro"
-  subnet_id = "${aws_subnet.tf_subnet_1.id}"
+  instance_type     = "t2.medium"
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
     "${aws_security_group.allow_ping.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
-  key_name = "hkjn-key-1"
   tags {
-    Name = "tf-core-1"
+    Name = "tf_k8s_master"
   }
-  # iam_instance_profile = ..
-  # user_data = ""
 }
 
-resource "aws_instance" "tf-core-2" {
+resource "aws_instance" "tf_k8s_worker_1" {
+  key_name          = "hkjn-key-1"
   ami               = "ami-82b5f5f1"
+  instance_type     = "t2.small"
   availability_zone = "eu-west-1b"
-  instance_type     = "t2.micro"
-  subnet_id = "${aws_subnet.tf_subnet_2.id}"
+  subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 1)}"
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
     "${aws_security_group.allow_ping.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
-  key_name = "hkjn-key-1"
   tags {
-    Name = "tf-core-2"
+    Name = "tf_k8s_worker_1"
   }
-  associate_public_ip_address = true
 }
 
-#resource "aws_instance" "tf-core-3" {
-#  ami               = "ami-82b5f5f1"
-#  availability_zone = "eu-west-1c"
-#  instance_type     = "t2.tiny"
-#  tags {
-#    Name = "tf-core-3"
-#  }
-#}
+resource "aws_instance" "tf_k8s_worker_2" {
+  key_name          = "hkjn-key-1"
+  ami               = "ami-82b5f5f1"
+  instance_type     = "t2.small"
+  availability_zone = "eu-west-1c"
+  subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 2)}"
+  vpc_security_group_ids = [
+    "${aws_security_group.allow_ssh.id}",
+    "${aws_security_group.allow_ping.id}",
+    "${aws_security_group.allow_outbound.id}",
+  ]
+  tags {
+    Name = "tf_k8s_worker_2"
+  }
+}
+
+resource "aws_eip" "ip" {
+  instance = "${aws_instance.tf_k8s_master.id}"
+}
