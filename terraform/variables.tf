@@ -28,3 +28,25 @@ variable public_ranges {
 variable azs {
   default = "eu-west-1a,eu-west-1b,eu-west-1c"
 }
+
+variable master_ami {
+  # CoreOS Alpha AMI
+  # default = "ami-82b5f5f1"
+  # Ubuntu 14.04 LTS AMI
+  # default = "ami-ed82e39e"
+  # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20160721:
+  default = "ami-1967056a"
+}
+
+variable worker_ami {
+  # CoreOS Alpha AMI
+  # default = "ami-82b5f5f1"
+  # Ubuntu 14.04 LTS AMI
+  default = "ami-ed82e39e"
+  # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20160721:
+  default = "ami-1967056a"
+}
+
+variable k8s_token {
+  default = "missing-k8s-token"
+}

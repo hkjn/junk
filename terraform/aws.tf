@@ -85,6 +85,23 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
+resource "aws_security_group" "allow_kube" {
+  name = "Allow kubernetes bootstrap traffic"
+  vpc_id = "${aws_vpc.tf_vpc.id}"
+
+  # Allow SSH from VPN IP only.
+  ingress {
+    from_port = 9898
+    to_port = 9898
+    protocol = "tcp"
+    cidr_blocks = "${split(",", var.public_ranges)}"
+  }
+
+  tags {
+    Name = "allow_kube"
+  }
+}
+
 # Allow all outbound traffic.
 resource "aws_security_group" "allow_outbound" {
   name = "Allow outbound"
@@ -101,54 +118,77 @@ resource "aws_security_group" "allow_outbound" {
   }
 }
 
+data "template_file" "worker_init" {
+  template = "${file("${path.module}/templates/worker.sh.tpl")}"
+
+  vars = {
+    k8s_token = "${var.k8s_token}"
+    k8s_master_ip = "${aws_eip.master_eip.public_ip}"
+  }
+}
+
+data "template_file" "master_init" {
+  template = "${file("${path.module}/templates/master.sh.tpl")}"
+
+  vars = {
+    k8s_token = "${var.k8s_token}"
+  }
+}
+
 resource "aws_instance" "tf_k8s_master" {
   key_name          = "hkjn-key-1"
-  ami               = "ami-82b5f5f1"
+  ami               = "${var.master_ami}"
   subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 0)}"
   availability_zone = "eu-west-1a"
   instance_type     = "t2.medium"
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
     "${aws_security_group.allow_ping.id}",
+    "${aws_security_group.allow_kube.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
   tags {
     Name = "tf_k8s_master"
   }
+  user_data       = "${data.template_file.master_init.rendered}"
 }
 
 resource "aws_instance" "tf_k8s_worker_1" {
   key_name          = "hkjn-key-1"
-  ami               = "ami-82b5f5f1"
+  ami               = "${var.worker_ami}"
   instance_type     = "t2.small"
   availability_zone = "eu-west-1b"
   subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 1)}"
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
     "${aws_security_group.allow_ping.id}",
+    "${aws_security_group.allow_kube.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
   tags {
     Name = "tf_k8s_worker_1"
   }
+  user_data       = "${data.template_file.worker_init.rendered}"
 }
 
 resource "aws_instance" "tf_k8s_worker_2" {
   key_name          = "hkjn-key-1"
-  ami               = "ami-82b5f5f1"
+  ami               = "${var.worker_ami}"
   instance_type     = "t2.small"
   availability_zone = "eu-west-1c"
   subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 2)}"
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
     "${aws_security_group.allow_ping.id}",
+    "${aws_security_group.allow_kube.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
   tags {
     Name = "tf_k8s_worker_2"
   }
+  user_data       = "${data.template_file.worker_init.rendered}"
 }
 
-resource "aws_eip" "ip" {
+resource "aws_eip" "master_eip" {
   instance = "${aws_instance.tf_k8s_master.id}"
 }
