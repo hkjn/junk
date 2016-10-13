@@ -48,5 +48,4 @@ variable worker_ami {
 }
 
 variable k8s_token {
-  default = "missing-k8s-token"
 }
