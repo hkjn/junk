@@ -9,7 +9,7 @@ data "template_file" "worker_init" {
 
   vars = {
     k8s_token = "${var.k8s_token}"
-    k8s_master_ip = "${aws_eip.master_eip.public_ip}"
+    k8s_master_ip = "${aws_instance.tf_k8s_master.private_ip}"
   }
 }
 
