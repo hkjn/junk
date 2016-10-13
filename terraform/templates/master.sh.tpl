@@ -16,7 +16,7 @@ log "Installing updates.."
 apt-get update
 
 log "Installing docker.."
-apt-get -y install docker
+apt-get -y install docker.io
 
 log "Installing kubernetes.."
 apt-get install -y kubelet kubeadm kubectl kubernetes-cni
