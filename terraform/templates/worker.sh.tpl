@@ -13,7 +13,12 @@ deb http://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 
 log "Installing updates.."
-apt-get update
+apt-get -y install docker.io || {
+  # Workaround for install failing due to some race condition around docker.socket:
+  # "no sockets found via socket activation: make sure the service was started by systemd"
+  systemctl start docker.socket
+  systemctl start docker.service
+}
 
 log "Installing docker.."
 apt-get -y install docker.io

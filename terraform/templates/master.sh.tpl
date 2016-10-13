@@ -16,7 +16,12 @@ log "Installing updates.."
 apt-get update
 
 log "Installing docker.."
-apt-get -y install docker.io
+apt-get -y install docker.io || {
+  # Workaround for install failing due to some race condition around docker.socket:
+  # "no sockets found via socket activation: make sure the service was started by systemd"
+  systemctl start docker.socket
+  systemctl start docker.service
+}
 
 log "Installing kubernetes.."
 apt-get install -y kubelet kubeadm kubectl kubernetes-cni
