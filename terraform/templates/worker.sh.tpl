@@ -12,9 +12,6 @@ cat <<EOF > /etc/apt/sources.list.d/kubernetes.list
 deb http://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 
-log "Installing updates.."
-apt-get -y update
-
 log "Installing docker.io.."
 apt-get -y install docker.io || {
   # Workaround for install failing due to some race condition around docker.socket:
@@ -22,6 +19,9 @@ apt-get -y install docker.io || {
   systemctl start docker.socket
   systemctl start docker.service
 }
+
+log "Installing updates.."
+apt-get -y update
 
 log "Installing kubernetes.."
 apt-get install -y kubelet kubeadm kubectl kubernetes-cni
