@@ -36,3 +36,20 @@ After that, the `.tfstate` can be pulled/pushed with:
 terraform remote push
 terraform remote pull
 ```
+
+## Remote access
+
+To access the kubernetes cluster remotely, the easiest way is to copy
+out `admin.conf` from the k8s master, as described under the `kubeadm`
+"Limitations" section:
+
+- http://kubernetes.io/docs/getting-started-guides/kubeadm/
+
+You'll need to change the `server` entry to specify the public IP for
+the master, instead of the internal IP.
+
+After that, just adding `--kubeconfig` should work:
+
+```
+kubectl --kubeconfig ./admin.conf get nodes
+```
