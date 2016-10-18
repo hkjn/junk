@@ -21,6 +21,10 @@ variable "env" {
   default = "tf_test"
 }
 
+variable vpn_range {
+  default = "163.172.150.69/32"
+}
+
 variable public_ranges {
   default = "10.0.40.0/26,10.0.40.64/26,10.0.40.128/26"
 }
