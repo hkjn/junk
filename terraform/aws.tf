@@ -30,7 +30,7 @@ resource "aws_instance" "tf_k8s_master" {
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
     "${aws_security_group.allow_ping.id}",
-    "${aws_security_group.allow_kube.id}",
+    "${aws_security_group.allow_internal.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
   tags {
@@ -51,8 +51,9 @@ resource "aws_instance" "tf_k8s_worker_1" {
   subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 1)}"
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
+    "${aws_security_group.allow_api.id}",
     "${aws_security_group.allow_ping.id}",
-    "${aws_security_group.allow_kube.id}",
+    "${aws_security_group.allow_internal.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
   tags {
@@ -70,7 +71,7 @@ resource "aws_instance" "tf_k8s_worker_2" {
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
     "${aws_security_group.allow_ping.id}",
-    "${aws_security_group.allow_kube.id}",
+    "${aws_security_group.allow_internal.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
   tags {

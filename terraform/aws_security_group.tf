@@ -27,7 +27,7 @@ resource "aws_security_group" "allow_ssh" {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_blocks = [${var.vpn_range}]
+    cidr_blocks = ["${var.vpn_range}"]
   }
 
   tags {
@@ -35,8 +35,25 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
-resource "aws_security_group" "allow_kube" {
-  name = "Allow kubernetes bootstrap traffic"
+resource "aws_security_group" "allow_api" {
+  name = "Allow traffic to apiserver"
+  vpc_id = "${aws_vpc.tf_vpc.id}"
+
+  # Allow apiserver requests from VPN IP only.
+  ingress {
+    from_port = 443
+    to_port = 443
+    protocol = "tcp"
+    cidr_blocks = ["${var.vpn_range}"]
+  }
+
+  tags {
+    Name = "allow_api"
+  }
+}
+
+resource "aws_security_group" "allow_internal" {
+  name = "Allow all traffic within subnets"
   vpc_id = "${aws_vpc.tf_vpc.id}"
 
 	# Allow all traffic from inside subnets.
@@ -48,7 +65,7 @@ resource "aws_security_group" "allow_kube" {
   }
 
   tags {
-    Name = "allow_kube"
+    Name = "allow_internal"
   }
 }
 
