@@ -14,7 +14,10 @@ terraform plan -var 'k8s_token=123456.43b453f7de265cba'
 terraform apply -var 'k8s_token=123456.43b453f7de265cba'
 ```
 
-*TODO(hkjn)*: Give python snippet for generating token.
+A new token can be generated with:
+```
+python -c 'import random; print "%0x.%0x" % (random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8))'
+```
 
 ## Remote state
 
