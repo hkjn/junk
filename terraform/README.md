@@ -16,7 +16,7 @@ terraform apply -var 'k8s_token=123456.43b453f7de265cba'
 
 A new token can be generated with:
 ```
-python -c 'import random; print "%0x.%0x" % (random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8))'
+python -c 'import random; print("{0:x}.{1:x}".format(random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8)))'
 ```
 
 ## Remote state
