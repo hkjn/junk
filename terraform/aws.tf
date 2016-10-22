@@ -22,7 +22,7 @@ data "template_file" "master_init" {
 }
 
 resource "aws_instance" "tf_k8s_master" {
-  key_name          = "hkjn-key-1"
+  key_name          = "${var.ssh_key}"
   ami               = "${var.master_ami}"
   subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 0)}"
   availability_zone = "eu-west-1a"
@@ -45,7 +45,7 @@ resource "aws_eip" "master_eip" {
 }
 
 resource "aws_instance" "tf_k8s_worker_1" {
-  key_name          = "hkjn-key-1"
+  key_name          = "${var.ssh_key}"
   ami               = "${var.worker_ami}"
   instance_type     = "t2.small"
   availability_zone = "eu-west-1b"
@@ -63,7 +63,7 @@ resource "aws_instance" "tf_k8s_worker_1" {
 }
 
 resource "aws_instance" "tf_k8s_worker_2" {
-  key_name          = "hkjn-key-1"
+  key_name          = "${var.ssh_key}"
   ami               = "${var.worker_ami}"
   instance_type     = "t2.small"
   availability_zone = "eu-west-1c"

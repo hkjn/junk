@@ -5,6 +5,10 @@ variable "creds_file" {
   default = "/.aws/credentials"
 }
 
+variable "ssh_key" {
+  default = "hkjn-key-1"
+}
+
 variable "region" {
   default = "eu-west-1"
 }
