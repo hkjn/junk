@@ -53,3 +53,12 @@ After that, just adding `--kubeconfig` should work:
 ```
 kubectl --kubeconfig ./admin.conf get nodes
 ```
+
+## Producing graphs of your infrastructure
+
+Terraform can produce directed graphs in `.dot` format:
+
+```
+$ terraform graph > graph.dot
+$ dot -Tpng graph.dot -o graph.png && xdg-open graph.png
+```
