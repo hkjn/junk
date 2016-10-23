@@ -1,23 +1,12 @@
 provider "aws" {
   region                   = "${var.region}"
-  shared_credentials_file  = "${var.creds_file}"
-  profile                  = "${var.profile}"
 }
 
 data "template_file" "worker_init" {
-  template = "${file("${path.module}/templates/worker.sh.tpl")}"
+  template = "${file("${path.module}/worker.yml")}"
 
   vars = {
-    k8s_token = "${var.k8s_token}"
-    k8s_master_ip = "${aws_instance.tf_k8s_master.private_ip}"
-  }
-}
-
-data "template_file" "master_init" {
-  template = "${file("${path.module}/templates/master.sh.tpl")}"
-
-  vars = {
-    k8s_token = "${var.k8s_token}"
+    master_ip = "${aws_instance.tf_k8s_master.private_ip}"
   }
 }
 
@@ -37,7 +26,7 @@ resource "aws_instance" "tf_k8s_master" {
   tags {
     Name = "tf_k8s_master"
   }
-  user_data       = "${data.template_file.master_init.rendered}"
+  user_data       = "${file("${path.module}/master.yml")}"
 }
 
 resource "aws_eip" "master_eip" {

@@ -1,3 +1,7 @@
+output "master_dns" {
+  value = "${google_dns_managed_zone.testzone.name}"
+}
+
 output "master_ip" {
   value = "${aws_eip.master_eip.public_ip}"
 }

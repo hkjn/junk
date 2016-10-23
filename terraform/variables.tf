@@ -1,10 +1,3 @@
-#
-# Default Terraform variables.
-#
-variable "creds_file" {
-  default = "/.aws/credentials"
-}
-
 variable "ssh_key" {
   default = "hkjn-key-1"
 }
@@ -38,21 +31,13 @@ variable azs {
 }
 
 variable master_ami {
-  # CoreOS Alpha AMI
-  # default = "ami-82b5f5f1"
-  # Ubuntu 14.04 LTS AMI
-  # default = "ami-ed82e39e"
-  # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20160721:
-  default = "ami-1967056a"
+  # Current CoreOS Alpha HVM AMI from https://coreos.com/os/docs/latest/booting-on-ec2.html.
+  default = "ami-29511f5a"
 }
 
 variable worker_ami {
-  # CoreOS Alpha AMI
-  # default = "ami-82b5f5f1"
-  # Ubuntu 14.04 LTS AMI
-  default = "ami-ed82e39e"
-  # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20160721:
-  default = "ami-1967056a"
+  # Current CoreOS Alpha HVM AMI from https://coreos.com/os/docs/latest/booting-on-ec2.html.
+  default = "ami-29511f5a"
 }
 
 variable k8s_token {
