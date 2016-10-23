@@ -1,13 +1,17 @@
-variable "google_credentials" {
+variable "gcloud_credentials" {
   default = ".gcp/tf-dns-editor.json"
 }
 
-variable "google_project" {
+variable "gcloud_project" {
   default = "henrik-jonsson"
 }
 
-variable "google_region" {
+variable "gcloud_region" {
   default = "europe-west1"
+}
+
+variable "gcloud_dns_zone" {
+  default = "tf.hkjn.me."
 }
 
 variable "ssh_key" {

@@ -1,5 +1,5 @@
 output "master_dns" {
-  value = "${google_dns_record_set.namemanaged_zone.testzone.dns_name}"
+  value = "${google_dns_record_set.master.name}"
 }
 
 output "master_ip" {
