@@ -1,3 +1,15 @@
+variable "google_credentials" {
+  default = ".gcp/tf-dns-editor.json"
+}
+
+variable "google_project" {
+  default = "henrik-jonsson"
+}
+
+variable "google_region" {
+  default = "europe-west1"
+}
+
 variable "ssh_key" {
   default = "hkjn-key-1"
 }
@@ -31,7 +43,7 @@ variable azs {
 }
 
 variable master_ami {
-  # Current CoreOS Alpha HVM AMI from https://coreos.com/os/docs/latest/booting-on-ec2.html.
+  # Current CoreOS Alpha HVM AMI from https://coreos.com/os/docs/latest/booting-on-ec2.html.  # CoreOS Alpha AMI
   default = "ami-29511f5a"
 }
 

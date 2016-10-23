@@ -23,8 +23,7 @@ python -c 'import random; print("{0:x}.{1:x}".format(random.SystemRandom().getra
 
 The remote state via S3 bucket is configured with:
 ```
-terraform remote config -backend=s3 -backend-config="bucket=terraform-test-state" -backend-config="key=network/terr
-aform.tfstate" -backend-config="region=eu-west-1"
+terraform remote config -backend=s3 -backend-config="bucket=terraform-test-state" -backend-config="key=network/terraform.tfstate" -backend-config="region=eu-west-1"
 ```
 
 This seems to require that `AWS_ACCESS_KEY_ID` /
