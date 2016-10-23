@@ -53,6 +53,17 @@ After that, just adding `--kubeconfig` should work:
 kubectl --kubeconfig ./admin.conf get nodes
 ```
 
+## Run Dockerized Terraform
+
+Using the `hkjn/terraform` image, you can load the alias from
+`docker-tf.sh` and run Dockerized Terraform commands:
+
+```
+$ source docker-tf.sh
+$ tf plan -var "k8s_token=1b2256.e1c08a1b230a0b04"
+$ tf apply -var "k8s_token=1b2256.e1c08a12320a0b04"
+```
+
 ## Generate Google Cloud Platform service user
 
 The `var.google_credentials` value refers to a `.json`-formatted
