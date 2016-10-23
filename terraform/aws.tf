@@ -6,11 +6,18 @@ data "template_file" "worker_init" {
   template = "${file("${path.module}/worker.yml")}"
 
   vars = {
-    master_ip = "${aws_instance.tf_k8s_master.private_ip}"
+    master_ip = "${aws_instance.master_1.private_ip}"
   }
 }
 
-resource "aws_instance" "tf_k8s_master" {
+data "template_file" "master_init" {
+  template = "${file("${path.module}/master.yml")}"
+
+  vars = {
+  }
+}
+
+resource "aws_instance" "master_1" {
   key_name          = "${var.ssh_key}"
   ami               = "${var.master_ami}"
   subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 0)}"
@@ -18,22 +25,23 @@ resource "aws_instance" "tf_k8s_master" {
   instance_type     = "t2.medium"
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
+    "${aws_security_group.allow_tls.id}",
     "${aws_security_group.allow_ping.id}",
     "${aws_security_group.allow_internal.id}",
     "${aws_security_group.allow_outbound.id}",
-    "${aws_security_group.allow_api.id}",
   ]
   tags {
-    Name = "tf_k8s_master"
+    Name = "master_1"
+    orchestration = "terraform"
   }
-  user_data       = "${file("${path.module}/master.yml")}"
+  user_data       = "${data.template_file.master_init.rendered}"
 }
 
 resource "aws_eip" "master_eip" {
-  instance = "${aws_instance.tf_k8s_master.id}"
+  instance = "${aws_instance.master_1.id}"
 }
 
-resource "aws_instance" "tf_k8s_worker_1" {
+resource "aws_instance" "worker_1" {
   key_name          = "${var.ssh_key}"
   ami               = "${var.worker_ami}"
   instance_type     = "t2.small"
@@ -46,12 +54,13 @@ resource "aws_instance" "tf_k8s_worker_1" {
     "${aws_security_group.allow_outbound.id}",
   ]
   tags {
-    Name = "tf_k8s_worker_1"
+    Name = "worker_1"
+    orchestration = "terraform"
   }
   user_data       = "${data.template_file.worker_init.rendered}"
 }
 
-resource "aws_instance" "tf_k8s_worker_2" {
+resource "aws_instance" "worker_2" {
   key_name          = "${var.ssh_key}"
   ami               = "${var.worker_ami}"
   instance_type     = "t2.small"
@@ -64,7 +73,8 @@ resource "aws_instance" "tf_k8s_worker_2" {
     "${aws_security_group.allow_outbound.id}",
   ]
   tags {
-    Name = "tf_k8s_worker_2"
+    Name = "worker_2"
+    orchestration = "terraform"
   }
   user_data       = "${data.template_file.worker_init.rendered}"
 }

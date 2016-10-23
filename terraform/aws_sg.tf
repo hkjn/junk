@@ -15,6 +15,25 @@ resource "aws_security_group" "allow_ping" {
   }
   tags {
     Name = "allow_ping"
+    orchestration = "terraform"
+  }
+}
+
+resource "aws_security_group" "allow_tls" {
+  name = "Allow tls"
+  vpc_id = "${aws_vpc.tf_vpc.id}"
+
+  # Allow TLS/HTTPS from VPN IP only.
+  ingress {
+    from_port = 443
+    to_port = 443
+    protocol = "tcp"
+    cidr_blocks = ["${var.vpn_range}"]
+  }
+
+  tags {
+    Name = "allow_tls"
+    orchestration = "terraform"
   }
 }
 
@@ -32,23 +51,7 @@ resource "aws_security_group" "allow_ssh" {
 
   tags {
     Name = "allow_ssh"
-  }
-}
-
-resource "aws_security_group" "allow_api" {
-  name = "Allow traffic to apiserver"
-  vpc_id = "${aws_vpc.tf_vpc.id}"
-
-  # Allow apiserver requests from VPN IP only.
-  ingress {
-    from_port = 443
-    to_port = 443
-    protocol = "tcp"
-    cidr_blocks = ["${var.vpn_range}"]
-  }
-
-  tags {
-    Name = "allow_api"
+    orchestration = "terraform"
   }
 }
 
@@ -66,6 +69,7 @@ resource "aws_security_group" "allow_internal" {
 
   tags {
     Name = "allow_internal"
+    orchestration = "terraform"
   }
 }
 
@@ -82,5 +86,6 @@ resource "aws_security_group" "allow_outbound" {
   }
   tags {
     Name = "allow_outbound"
+    orchestration = "terraform"
   }
 }

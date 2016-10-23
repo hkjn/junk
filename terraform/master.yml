@@ -11,22 +11,22 @@ write-files:
     content: |
       #!/bin/bash
       # [w]ait [u]ntil [p]ort [i]s [a]ctually [o]pen
-      [ -n "$1" ] && \
-        until curl -o /dev/null -sIf http://${1}; do \
+      [ -n "$$1" ] && \
+        until curl -o /dev/null -sIf http://$${1}; do \
           sleep 1 && echo .;
         done;
-      exit $?
+      exit $$?
 
 hostname: master
 coreos:
   etcd2:
     name: master
     listen-client-urls: http://0.0.0.0:2379
-    advertise-client-urls: http://$private_ipv4:2379
+    advertise-client-urls: http://$$private_ipv4:2379
     initial-cluster-token: k8s_etcd
-    listen-peer-urls: http://$private_ipv4:2380
-    initial-advertise-peer-urls: http://$private_ipv4:2380
-    initial-cluster: master=http://$private_ipv4:2380
+    listen-peer-urls: http://$$private_ipv4:2380
+    initial-advertise-peer-urls: http://$$private_ipv4:2380
+    initial-cluster: master=http://$$private_ipv4:2380
     initial-cluster-state: new
   fleet:
     metadata: "role=master"
@@ -100,7 +100,7 @@ coreos:
         ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-apiserver -z /opt/bin/kube-apiserver https://storage.googleapis.com/kubernetes-release/release/v1.1.2/bin/linux/amd64/kube-apiserver
         ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-apiserver
         ExecStartPre=/opt/bin/wupiao 127.0.0.1:2379/v2/machines
-
+        # TODO: Set --tls-cert-file / --tls-private-key-file to valid LetsEncrypt cert; drop service-account-key-file: http://kubernetes.io/docs/admin/kube-apiserver/
         ExecStart=/opt/bin/kube-apiserver \
           --service-account-key-file=/opt/bin/kube-serviceaccount.key \
           --service-account-lookup=false \
@@ -110,10 +110,9 @@ coreos:
           --insecure-bind-address=0.0.0.0 \
           --insecure-port=8080 \
           --kubelet-https=true \
-          --secure-port=6443 \
+          --secure-port=443 \
           --service-cluster-ip-range=10.100.0.0/16 \
           --etcd-servers=http://127.0.0.1:2379 \
-          --bind-address=${DEFAULT_IPV4} \
           --logtostderr=true
 
     - name: kube-controller-manager.service

@@ -10,8 +10,8 @@ variable "gcloud_region" {
   default = "europe-west1"
 }
 
-variable "gcloud_dns_zone" {
-  default = "tf.hkjn.me."
+variable "gcloud_dns" {
+  default = "tf.hkjn.me"
 }
 
 variable "ssh_key" {
