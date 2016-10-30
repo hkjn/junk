@@ -2,4 +2,5 @@
 .gcp/
 .aws/
 .ash_history
+.certs
 .terraform*
