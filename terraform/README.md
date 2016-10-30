@@ -82,3 +82,12 @@ $ terraform graph > graph.dot
 $ dot -Tpng graph.dot -o graph.png && xdg-open graph.png
 ```
 
+## Debug TF outputs
+
+Some of the data in state files are large, like the `cloud-config.yml`
+file used for `user-data`. With the `jq` tool, these can be output in readable format:
+
+```
+$ cc=$(cat .terraform/terraform.tfstate | jq '.modules[0].resources."data.template_file.master_init".primary.attributes.rendered'); python -c "print($cc)"
+```
+
