@@ -1,5 +1,5 @@
 provider "aws" {
-  region                   = "${var.region}"
+  region = "${var.region}"
 }
 
 data "template_file" "worker_init" {
@@ -13,8 +13,7 @@ data "template_file" "worker_init" {
 data "template_file" "master_init" {
   template = "${file("${path.module}/master.yml")}"
 
-  vars = {
-  }
+  vars = {}
 }
 
 resource "aws_instance" "master_1" {
@@ -23,6 +22,7 @@ resource "aws_instance" "master_1" {
   subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 0)}"
   availability_zone = "eu-west-1a"
   instance_type     = "t2.medium"
+
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
     "${aws_security_group.allow_tls.id}",
@@ -30,11 +30,13 @@ resource "aws_instance" "master_1" {
     "${aws_security_group.allow_internal.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
+
   tags {
-    Name = "master_1"
+    Name          = "master_1"
     orchestration = "terraform"
   }
-  user_data       = "${data.template_file.master_init.rendered}"
+
+  user_data = "${data.template_file.master_init.rendered}"
 }
 
 resource "aws_eip" "master_eip" {
@@ -47,17 +49,20 @@ resource "aws_instance" "worker_1" {
   instance_type     = "t2.small"
   availability_zone = "eu-west-1b"
   subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 1)}"
+
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
     "${aws_security_group.allow_ping.id}",
     "${aws_security_group.allow_internal.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
+
   tags {
-    Name = "worker_1"
+    Name          = "worker_1"
     orchestration = "terraform"
   }
-  user_data       = "${data.template_file.worker_init.rendered}"
+
+  user_data = "${data.template_file.worker_init.rendered}"
 }
 
 resource "aws_instance" "worker_2" {
@@ -66,15 +71,18 @@ resource "aws_instance" "worker_2" {
   instance_type     = "t2.small"
   availability_zone = "eu-west-1c"
   subnet_id         = "${element(aws_subnet.tf_subnets.*.id, 2)}"
+
   vpc_security_group_ids = [
     "${aws_security_group.allow_ssh.id}",
     "${aws_security_group.allow_ping.id}",
     "${aws_security_group.allow_internal.id}",
     "${aws_security_group.allow_outbound.id}",
   ]
+
   tags {
-    Name = "worker_2"
+    Name          = "worker_2"
     orchestration = "terraform"
   }
-  user_data       = "${data.template_file.worker_init.rendered}"
+
+  user_data = "${data.template_file.worker_init.rendered}"
 }

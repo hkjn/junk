@@ -26,9 +26,8 @@ resource "google_dns_record_set" "worker1" {
   ttl  = 150
 
   managed_zone = "${google_dns_managed_zone.zone.name}"
-  rrdatas = ["${aws_instance.worker_1.public_ip}"]
+  rrdatas      = ["${aws_instance.worker_1.public_ip}"]
 }
-
 
 resource "google_dns_record_set" "worker2" {
   name = "w2.${google_dns_managed_zone.zone.dns_name}"
@@ -36,7 +35,5 @@ resource "google_dns_record_set" "worker2" {
   ttl  = 150
 
   managed_zone = "${google_dns_managed_zone.zone.name}"
-  rrdatas = ["${aws_instance.worker_2.public_ip}"]
+  rrdatas      = ["${aws_instance.worker_2.public_ip}"]
 }
-
-

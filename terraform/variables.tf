@@ -56,5 +56,4 @@ variable worker_ami {
   default = "ami-29511f5a"
 }
 
-variable k8s_token {
-}
+variable k8s_token {}
