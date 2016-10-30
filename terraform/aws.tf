@@ -13,7 +13,11 @@ data "template_file" "worker_init" {
 data "template_file" "master_init" {
   template = "${file("${path.module}/master.yml")}"
 
-  vars = {}
+  vars = {
+    service_account_key_pem = "${base64encode(file("${path.module}/.certs/service-account-key.pem"))}"
+    k8s_apiserver_pem = "${base64encode(file("${path.module}/.certs/k8s-apiserver.pem"))}"
+    k8s_apiserver_key_pem = "${base64encode(file("${path.module}/.certs/k8s-apiserver-key.pem"))}"
+  }
 }
 
 resource "aws_instance" "master_1" {

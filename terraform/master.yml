@@ -16,6 +16,21 @@ write-files:
           sleep 1 && echo .;
         done;
       exit $$?
+  - path: /etc/kubernetes/ssl/service-account-key.pem
+    permissions: '0400'
+    encoding: "base64"
+    content: |
+        ${service_account_key_pem}
+  - path: /etc/kubernetes/ssl/k8s-apiserver.pem
+    permissions: '0400'
+    encoding: "base64"
+    content: |
+        ${k8s_apiserver_pem}
+  - path: /etc/kubernetes/ssl/k8s-apiserver-key.pem
+    permissions: '0400'
+    encoding: "base64"
+    content: |
+        ${k8s_apiserver_key_pem}
 
 hostname: master
 coreos:
@@ -33,19 +48,6 @@ coreos:
   units:
     - name: etcd2.service
       command: start
-
-    # Generate a kube-serviceaccount.key, a private RSA key for the master.
-    - name: generate-serviceaccount-key.service
-      command: start
-      content: |
-        [Unit]
-        Description=Generate service-account key file
-
-        [Service]
-        ExecStartPre=-/usr/bin/mkdir -p /opt/bin
-        ExecStart=/bin/openssl genrsa -out /opt/bin/kube-serviceaccount.key 2048 2>/dev/null
-        RemainAfterExit=yes
-        Type=oneshot
 
     # Write /etc/network-environment file.
     - name: setup-network-environment.service
@@ -89,8 +91,8 @@ coreos:
         [Unit]
         Description=Kubernetes API Server
         Documentation=https://github.com/kubernetes/kubernetes
-        Requires=setup-network-environment.service etcd2.service generate-serviceaccount-key.service
-        After=setup-network-environment.service etcd2.service generate-serviceaccount-key.service
+        Requires=setup-network-environment.service etcd2.service
+        After=setup-network-environment.service etcd2.service
 
         [Service]
         Restart=always
@@ -100,9 +102,12 @@ coreos:
         ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-apiserver -z /opt/bin/kube-apiserver https://storage.googleapis.com/kubernetes-release/release/v1.1.2/bin/linux/amd64/kube-apiserver
         ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-apiserver
         ExecStartPre=/opt/bin/wupiao 127.0.0.1:2379/v2/machines
-        # TODO: Set --tls-cert-file / --tls-private-key-file to valid LetsEncrypt cert; drop service-account-key-file: http://kubernetes.io/docs/admin/kube-apiserver/
+        # TODO: Set --tls-cert-file / --tls-private-key-file to valid LetsEncrypt cert.
+        # TODO: Restrict --unsecure-bind-address to 127.0.0.1
         ExecStart=/opt/bin/kube-apiserver \
-          --service-account-key-file=/opt/bin/kube-serviceaccount.key \
+          --service-account-key-file=/etc/kubernetes/ssl/service-account-key.pem \
+          --tls-cert-file=/etc/kubernetes/ssl/k8s-apiserver.pem \
+          --tls-private-key-file=/etc/kubernetes/ssl/k8s-apiserver-key.pem \
           --service-account-lookup=false \
           --admission-control=NamespaceLifecycle,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota \
           --runtime-config=api/v1 \
