@@ -91,3 +91,17 @@ file used for `user-data`. With the `jq` tool, these can be output in readable f
 $ cc=$(cat .terraform/terraform.tfstate | jq '.modules[0].resources."data.template_file.master_init".primary.attributes.rendered'); python -c "print($cc)"
 ```
 
+## TF bug:
+
+Similar to #5199, the following API response indicates that a resource doesn't exist and that it should be removed from state:
+
+Error refreshing state: 1 error(s) occurred:
+
+```
+* aws_route.tf_public_gateway_route: Error while checking if route exists: InvalidRouteTableID.NotFound: The routeTable ID 'rtb-2ddae949' does not exist
+        status code: 400, request id: 52c3e323-44ef-4445-835b-f1f738c72bac
+```
+
+Workaround was to edit local `.terraform/terraform.tfstate` to remove
+the resource, _and_ incrementing `serial` (otherwise a local vs remote
+state conflict occurs).
