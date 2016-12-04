@@ -10,7 +10,8 @@ resource "aws_vpc" "tf_vpc" {
   enable_dns_support   = true
 
   tags {
-    Name = "${var.env}_vpc"
+    Name          = "${var.env}_vpc"
+    orchestration = "terraform"
   }
 }
 
@@ -18,7 +19,8 @@ resource "aws_internet_gateway" "tf_igw" {
   vpc_id = "${aws_vpc.tf_vpc.id}"
 
   tags {
-    Name = "${var.env}_igw"
+    Name          = "${var.env}_igw"
+    orchestration = "terraform"
   }
 }
 
@@ -26,7 +28,8 @@ resource "aws_route_table" "tf_public_routes" {
   vpc_id = "${aws_vpc.tf_vpc.id}"
 
   tags {
-    Name = "${var.env}_public_subnet_route_table"
+    Name          = "${var.env}_public_subnet_route_table"
+    orchestration = "terraform"
   }
 }
 
@@ -45,7 +48,8 @@ resource "aws_subnet" "tf_subnets" {
   count             = "${length(compact(split(",", var.public_ranges)))}"
 
   tags {
-    Name = "${var.env}_tf_subnet_${count.index}"
+    Name          = "${var.env}_tf_subnet_${count.index}"
+    orchestration = "terraform"
   }
 
   map_public_ip_on_launch = true
