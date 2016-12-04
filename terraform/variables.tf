@@ -1,19 +1,3 @@
-variable "gcloud_credentials" {
-  default = ".gcp/tf-dns-editor.json"
-}
-
-variable "gcloud_project" {
-  default = "henrik-jonsson"
-}
-
-variable "gcloud_region" {
-  default = "europe-west1"
-}
-
-variable "gcloud_dns" {
-  default = "tf.hkjn.me"
-}
-
 variable "ssh_key" {
   default = "hkjn-key-1"
 }
@@ -35,7 +19,7 @@ variable "env" {
 }
 
 variable vpn_range {
-  default = "163.172.150.69/32"
+  default = "212.47.239.127/32"
 }
 
 variable public_ranges {

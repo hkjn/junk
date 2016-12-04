@@ -23,17 +23,7 @@ python -c 'import random; print("{0:x}.{1:x}".format(random.SystemRandom().getra
 
 The remote state via S3 bucket is configured with:
 ```
-terraform remote config -backend=s3 -backend-config="bucket=terraform-test-state" -backend-config="key=network/terraform.tfstate" -backend-config="region=eu-west-1"
-```
-
-This seems to require that `AWS_ACCESS_KEY_ID` /
-`AWS_SECRET_ACCESS_KEY` / `AWS_DEFAULT_REGION` is set. (I.e. it
-doesn't use the `vars.creds_file`, for some reason).
-
-After that, the `.tfstate` can be pulled/pushed with:
-```
-terraform remote push
-terraform remote pull
+bash remote_config.sh
 ```
 
 ## Remote access
