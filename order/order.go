@@ -9,13 +9,14 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type (
 	// OrderNumber is a unique number of an Order.
 	OrderNumber int64
 
-	// Price is a value in some currency.
+	// Price is a value in USD.
 	Price float64
 
 	// Volume is the amount of units being traded.
@@ -27,10 +28,6 @@ type (
 	// OrderSide is the side of an order, i.e. "buy" or "sell".
 	OrderSide uint8
 
-	// Value1 represents either the number of units to trade or the
-	// order number to cancel, depending on OrderType.
-	Value1 uint64
-
 	// Order is a request to trade items under some conditions.
 	Order struct {
 		// The unique id of the Order.
@@ -41,32 +38,39 @@ type (
 		executed bool
 		// stopTriggered is true for stop orders that have been triggered.
 		stopTriggered bool
-		// Type is the kind of OrderType, which determines when the order
-		// can execute.
+		// Type is the kind of order, which determines when the order can
+		// execute.
 		Type OrderType
 		// Side is the direction of the order (buy/sell).
 		Side OrderSide
-		// Value1 is the first value of an order, with semantics differing
-		// by OrderType.
-		Value1 Value1
-		// Value2 is the second value of an order, with semantics differing
-		// by OrderType.
-		Value2 Price
-		// Volume is the number of units to trade that remains unexecuted
-		// in order, where applicable.
+		// Limit is the price boundary of an order, where applicable. Semantics
+		// differ on OrderType.
+		Limit Price
+		// Volume is the number of units to trade for an order, where applicable.
 		Volume Volume
+		// Remaining is the number of units to trade that remains
+		// unexecuted in order, where applicable.
+		Remaining Volume
+		// ToCancel is the OrderNumber of a previous order to cancel, where applicable.
+		ToCancel OrderNumber
+	}
+
+	// orderTree is the internal representation of Order items for the orderbook.
+	//
+	// orderTree is a binary search tree that uses the price limit of orders as
+	// comparison key.
+	orderTree struct {
+		left, right *orderTree
+		item        *Order
 	}
 
 	// OrderBook holds all the orders.
 	OrderBook struct {
-		// TODO: Might be better to keep index of price bands to orders,
-		// or at least to not scan through orders we already have
-		// executed. Maybe https://en.wikipedia.org/wiki/Skip_list? Though
-		// https://en.wikipedia.org/wiki/Binary_search_tree is likely
-		// simplest. Or red-black tree?
-		orders     map[OrderNumber]Order
-		stopOrders map[OrderNumber]Order
-		nextOrder  OrderNumber
+		// orders is a BST for finding orders by price quickly.
+		orders *orderTree
+		//byNumber map[OrderNumber]*Order
+		nextOrder OrderNumber
+		cancelled map[OrderNumber]bool
 	}
 
 	// Match is a match between two orders.
@@ -88,32 +92,28 @@ type (
 const (
 	// Market is an Order to buy/sell at market value.
 	//
-	// Value1 is the number of units to trade.
-	//
-	// Value2 is ignored.
+	// Volume holds the number of units to trade.
 	Market OrderType = iota + 1
 	// Limit is an Order to buy/sell only at a specific price.
 	//
-	// Value1 is the number of units to trade.
+	// Volume holds the number of units to trade.
 	//
-	// Value2 is the lower price limit to execute at for a SellSide Order.
-	// Value2 is the upper price limit to execute at for a BuySide Order.
+	// Limit holds the lower price limit to execute at for a SellSide Order.
+	// Limit holds the upper price limit to execute at for a BuySide Order.
 	Limit
 	// Stop is an Order to trigger when price reaches given threshold.
 	//
 	// A Stop Order effectively creates a Market Order once the threshold
 	// is reached.
 	//
-	// Value1 is the number of units to trade.
+	// Volume holds the number of units to trade.
 	//
-	// Value2 is the threshold which if price goes below it triggers a SellSide Order.
-	// Value2 is the threshold which if price goes above it triggers a BuySide Order.
+	// Limit holds the threshold which if price goes below it triggers a SellSide Order.
+	// Limit holds the threshold which if price goes above it triggers a BuySide Order.
 	Stop
 	// Cancel is an Order to cancel a previous Order.
 	//
-	// Value1 is the number of a previous Order to cancel.
-	//
-	// Value2 is ignored.
+	// ToCancel holds the number of a previous order to cancel.
 	Cancel
 
 	// UndefinedSide is a default value for Order types which have no side.
@@ -159,7 +159,7 @@ func (p Price) String() string {
 }
 
 // getMatch returns Match if the two orders can match.
-func (taker Order) getMatch(maker Order) *Match {
+func (taker *Order) getMatch(maker *Order) *Match {
 	if taker.Side == maker.Side {
 		// Two BuySide or SellSide orders can't possibly match.
 		return nil
@@ -180,19 +180,21 @@ func (taker Order) getMatch(maker Order) *Match {
 	// If the taker is a Stop or Market order, any value is acceptable
 	// for a match.
 	if taker.Type == Stop {
+		// Stop orders need to be triggered first.
 		if taker.stopTriggered {
 			match = true
-			price = maker.Value2
+			// TODO: Correct? What if other side is Market too, with no Limit?
+			price = maker.Limit
 		}
 	} else if taker.Type == Market {
 		match = true
-		price = maker.Value2
-	} else if taker.Side == BuySide && taker.Value2 >= maker.Value2 {
+		price = maker.Limit
+	} else if taker.Side == BuySide && taker.Limit >= maker.Limit {
 		match = true
-		price = taker.Value2
-	} else if taker.Side == SellSide && taker.Value2 <= maker.Value2 {
+		price = taker.Limit
+	} else if taker.Side == SellSide && taker.Limit <= maker.Limit {
 		match = true
-		price = maker.Value2
+		price = maker.Limit
 	}
 
 	if !match {
@@ -205,8 +207,8 @@ func (taker Order) getMatch(maker Order) *Match {
 	}
 	debug("%q matches %q at %v, for %v units\n", taker, maker, price, volume)
 	return &Match{
-		Taker:  &taker,
-		Maker:  &maker,
+		Taker:  taker,
+		Maker:  maker,
 		Volume: Volume(volume),
 		Price:  price,
 	}
@@ -222,63 +224,86 @@ func (order Order) String() string {
 	if order.executed {
 		executed = "[executed] "
 	}
+	triggered := ""
+	if order.stopTriggered {
+		triggered = "[triggered] "
+	}
 	idstr := ""
 	if order.id > 0 {
 		idstr = fmt.Sprintf("[id %d] ", order.id)
 	}
-	desc := fmt.Sprintf("%s%s%s", idstr, cancelled, executed)
-	if order.Type == Cancel {
-		return fmt.Sprintf(
-			"%scancel order for #%v",
-			desc,
-			order.Value1,
-		)
-	}
-	if order.Type == Stop {
-		if order.Side == BuySide {
-			return fmt.Sprintf(
-				"%sstop buy order for #%v which triggers if price goes > $%v, with %v remaining",
-				desc,
-				order.Value1,
-				order.Value2,
-				order.Volume,
-			)
-		} else {
-			return fmt.Sprintf(
-				"%sstop sell order for #%v which triggers if price goes < $%v, with %v remaining",
-				desc,
-				order.Value1,
-				order.Value2,
-				order.Volume,
-			)
-		}
-	}
+	status := fmt.Sprintf("%s%s%s%s", idstr, cancelled, executed, triggered)
+
 	cond := "?!?"
 	if order.Side == BuySide {
 		cond = "<="
 	} else if order.Side == SellSide {
 		cond = ">="
 	}
+
 	if order.Type == Market {
 		return fmt.Sprintf(
-			"%smarket order to %v %v units %s market price, with %v remaining",
-			desc,
+			"%s%v order to %v %v units at market price, with %v remaining",
+			status,
+			order.Type,
 			order.Side,
-			order.Value1,
-			cond,
 			order.Volume,
+			order.Remaining,
 		)
 	}
-	return fmt.Sprintf(
-		"%s%v order to %v %v units at %s $%v, with %v remaining",
-		desc,
-		order.Type,
-		order.Side,
-		order.Value1,
-		cond,
-		order.Value2,
-		order.Volume,
-	)
+
+	if order.Type == Limit {
+		return fmt.Sprintf(
+			"%s%v order to %v %v units %s $%v, with %v remaining",
+			status,
+			order.Type,
+			order.Side,
+			order.Volume,
+			cond,
+			order.Limit,
+			order.Remaining,
+		)
+	}
+
+	if order.Type == Stop {
+		cond := "?!?"
+		if order.Side == BuySide {
+			cond = ">"
+		} else if order.Side == SellSide {
+			cond = "<"
+		}
+		return fmt.Sprintf(
+			"%s%v order to %v %v units if price goes %s %v, with %v remaining",
+			status,
+			order.Type,
+			order.Side,
+			order.Volume,
+			cond,
+			order.Limit,
+			order.Remaining,
+		)
+	}
+
+	if order.Type == Cancel {
+		return fmt.Sprintf(
+			"%s%v order that disables #%v",
+			status,
+			order.Type,
+			order.ToCancel,
+		)
+	}
+
+	return "Order{???}"
+}
+
+func (order *Order) valid() bool {
+	// Skip cancelled, executed, !isTriggered
+	// TODO: Drop cancelled, we now hold hashset directly in orderbook
+	v := !order.cancelled && !order.executed
+	if order.Type == Stop {
+		v = v && order.stopTriggered
+	}
+	return v
 }
 
 // String returns a readable description of the Match.
@@ -290,6 +315,13 @@ func (m Match) String() string {
 		m.Volume,
 		m.Price,
 	)
+}
+
+func (t orderTree) String() string {
+	if t.item == nil {
+		return ""
+	}
+	return fmt.Sprintf(" %q", t.item)
 }
 
 // Output returns the output format to emit for the Match.
@@ -319,9 +351,21 @@ func (ms Matches) Less(i, j int) bool {
 	return ms[i].Maker.id < ms[j].Maker.id
 }
 
+func info(format string, a ...interface{}) {
+	if true {
+		fmt.Printf("[I] "+format, a...)
+	}
+}
+
 func debug(format string, a ...interface{}) {
-	if false {
-		fmt.Printf("[DEBUG] "+format, a...)
+	if true {
+		fmt.Printf("[D]   "+format, a...)
+	}
+}
+
+func debugv(format string, a ...interface{}) {
+	if true {
+		fmt.Printf("[DD]     "+format, a...)
 	}
 }
 
@@ -334,19 +378,18 @@ func newOrder(orderstr string) *Order {
 		log.Fatalf("Unexpected order string: %q\n", orderstr)
 	}
 
-	otype, ok := orderTypesByStr[parts[0]]
+	order := &Order{}
+	ot, ok := orderTypesByStr[parts[0]]
 	if !ok {
 		log.Fatalf("Unexpected order type: %q\n", parts[0])
 	}
+	order.Type = ot
 
-	var oside OrderSide
-	if otype != Cancel {
+	if order.Type != Cancel {
 		if parts[1] == "buy" {
-			oside = BuySide
+			order.Side = BuySide
 		} else if parts[1] == "sell" {
-			oside = SellSide
-		} else {
-			log.Fatalf("Unexpected order side: %q\n", parts[1])
+			order.Side = SellSide
 		}
 	}
 
@@ -354,30 +397,36 @@ func newOrder(orderstr string) *Order {
 	if err != nil {
 		log.Fatalf("Unexpected value1: %q\n", parts[2])
 	}
+	if order.Type == Cancel {
+		order.ToCancel = OrderNumber(value1)
+	} else {
+		order.Volume = Volume(value1)
+		order.Remaining = order.Volume
+	}
+
 	value2, err := strconv.ParseFloat(parts[3], 64)
 	if err != nil {
 		log.Fatalf("Unexpected value2: %q\n", parts[3])
 	}
-
-	return &Order{
-		Type:   otype,
-		Side:   oside,
-		Value1: Value1(value1),
-		Value2: Price(value2),
-		Volume: Volume(value1),
+	if order.Type == Limit || order.Type == Stop {
+		order.Limit = Price(value2)
 	}
+
+	return order
 }
 
 // newOrderBook returns a new OrderBook.
 func newOrderBook() OrderBook {
 	return OrderBook{
-		orders:     map[OrderNumber]Order{},
-		stopOrders: map[OrderNumber]Order{},
-		nextOrder:  1,
+		nextOrder: 1,
+		cancelled: map[OrderNumber]bool{},
+		//byNumber: map[OrderNumber]Order{},
 	}
 }
 
 // getMatches returns all Matches to specified Order.
+//
+// The results are given in descending priority, with the best match first.
 //
 // If multiple orders match the new order, price limit is the first
 // priority.
@@ -386,8 +435,16 @@ func newOrderBook() OrderBook {
 // is matched first.
 func (book *OrderBook) getMatches(taker *Order) Matches {
 	matches := Matches{}
-	for _, maker := range book.orders {
-		if maker.cancelled || maker.executed {
+
+	// TODO: Handle missing Limit for Market
+	wantSide := SellSide
+	if taker.Side == SellSide {
+		wantSide = BuySide
+	}
+	for _, maker := range book.orders.fetch(taker.Limit, wantSide, taker.Type == Market) {
+		debug("looking to see if fetched maker %q is match\n", maker)
+		_, cancelled := book.cancelled[maker.id]
+		if cancelled {
 			continue
 		}
 		match := taker.getMatch(maker)
@@ -399,6 +456,105 @@ func (book *OrderBook) getMatches(taker *Order) Matches {
 	return matches
 }
 
+// insert adds a new Order to the orders BST.
+func (t *orderTree) insert(order *Order) {
+	debug("insert(%q)\n", order)
+	c := t
+	for c != nil {
+		if order.Limit <= c.item.Limit {
+			debugv("inserting to left (lower)\n")
+			c.left = &orderTree{}
+			c = c.left
+		} else {
+			debugv("inserting to right (higher)\n")
+			c.right = &orderTree{}
+			c = c.right
+		}
+	}
+	// TODO: Handle missing Limit; c.key should be nil
+	// c.key = order.id
+	c.item = order
+}
+
+func insert(root *orderTree, order *Order) *orderTree {
+	if root == nil {
+		root = &orderTree{
+			item: order,
+		}
+	} else if order.Limit <= root.item.Limit {
+		debugv("inserting %v to left (lower)\n", order.Limit)
+		root.left = insert(root.left, order)
+	} else {
+		debugv("inserting %v to right (higher)\n", order.Limit)
+		root.right = insert(root.right, order)
+	}
+	return root
+}
+
+func traverse(t *orderTree, desc string) {
+	if t == nil {
+		return
+	}
+	traverse(t.left, desc+"L")
+	debug("traversing [%v] %v: %+v\n", desc, t.item.id, t.item)
+	traverse(t.right, desc+"R")
+}
+
+// fetch traverses the BST and returns Order elements.
+//
+// If max is true, orders with limit values >= specified value are returned.
+// If max is false, orders with limit values <= specified value are returned.
+func (orderTree *orderTree) fetch(limit Price, side OrderSide, isMarket bool) []*Order {
+	c := orderTree
+	results := []*Order{}
+	debug("fetch(%v, %v)\n", limit, side)
+	// TODO: We need to delete nodes that become executed or cancelled,
+	// or we can miss better matches.
+	for c != nil {
+		if side == SellSide {
+			// Looking for orders with limit <= specified limit.
+			if c.item.Limit <= limit && c.item.Side == side && c.item.valid() {
+				results = append(results, c.item)
+				debugv("fetched order: %v\n", results)
+			}
+			debugv("fetching left (lower)\n")
+			c = c.left
+		} else {
+			// Looking for orders with limit >= specified limit.
+			if c.item.Limit >= limit && c.item.Side == side && c.item.valid() {
+				results = append(results, c.item)
+				debugv("fetched order: %v\n", results)
+			}
+			debugv("fetching right (higher)\n")
+			c = c.right
+		}
+		time.Sleep(time.Millisecond * 500)
+	}
+	return results
+}
+
+// delete removes an Order from the BST.
+func (t *orderTree) delete(order *Order) {
+	// TODO: Need a reference to the tree here.. even if we store a pointer
+	// back to the *orderTree, we'd still need a reference to its parent to
+	// be able to drop that parent's reference when we delete
+	// though. Looking up node by order.id is O(n).
+	debug("delete(%v)\n", order)
+}
+
+// findStops returns all Stop orders triggered by specified price.
+func (t *orderTree) findStops(price Price) []*Order {
+	// TODO: Set stopTriggered = true for all stops triggered here:
+	// if stop.Side == BuySide && oldMatch.Price > stop.Value2 {
+	// The match triggers this BuySide Stop.
+	// stopp.stopTriggered = true
+	// } else if stop.Side == SellSide && oldMatch.Price < stop.Value2 {
+	// The match triggers this SellSide Stop.
+	// stopp.stopTriggered = true
+	// }
+	return nil
+}
+
 // Add adds and attempts to execute an Order.
 //
 // The new Order are matched with existing orders in the book. Order
@@ -407,85 +563,81 @@ func (book *OrderBook) getMatches(taker *Order) Matches {
 // If there's matching orders, they are executed, and the resulting
 // matches are returned.
 func (book *OrderBook) Add(order *Order) Matches {
-	order.id = book.nextOrder
-	book.orders[order.id] = *order
-	if order.Type == Stop {
-		book.stopOrders[order.id] = *order
-	}
-	book.nextOrder++
-	debug("Added order %q\n", order)
-
+	//book.byNumber[order.id] = order
 	if order.Type == Cancel {
-		toCancel, exists := book.orders[OrderNumber(order.Value1)]
-		if exists && !toCancel.executed {
-			// If order to cancel didn't exist or was fully executed, it
-			// can't be cancelled. Weird, but this is supposed to be no-op.
-			toCancel.cancelled = true
-			book.orders[toCancel.id] = toCancel
-			debug("Cancelled %q\n", toCancel)
-			_, exists := book.stopOrders[toCancel.id]
-			if exists {
-				book.stopOrders[toCancel.id] = toCancel
-			}
-		}
+		book.cancelled[order.ToCancel] = true
+		// toCancel := book.orders.lookup(order.ToCancel)
+		// If order to cancel didn't exist or was fully executed, it
+		// can't be cancelled. Weird, but this is supposed to be no-op.
+		//if toCancel != nil && !toCancel.executed {
+		//toCancel.cancelled = true
+		debug("Cancelled %v\n", order.ToCancel)
+		//}
+		book.nextOrder++
+		return nil
+	}
+
+	order.id = book.nextOrder
+	book.orders = insert(book.orders, order)
+	// debug("book.orders=%+v\n", book.orders)
+	traverse(book.orders, ".")
+	book.nextOrder++
+	info("Added order %q\n", order)
+
+	// Stop orders don't match as taker, but they can be triggered
+	// after other orders execute.
+	if order.Type == Stop {
 		return nil
 	}
 
 	matches := Matches{}
-	// Stop orders don't match as taker, but they can be triggered
-	// after other orders execute.
-	for order.Type != Stop && !order.executed {
-		// Look through existing orders in book for ones matching price
-		// limit new order wants, if so they match and can be executed.
+	for !order.executed {
 		newMatches := book.getMatches(order)
 		if len(newMatches) == 0 {
+			debug("No matches\n")
 			return matches
 		}
+		debug("Got new matches: %v\n", newMatches)
 		order = book.execute(newMatches[0])
+		// TODO: Both taker and maker are executed here, need to be deleted from BST.
+		book.orders.delete(newMatches[0].Taker)
+		book.orders.delete(newMatches[0].Maker)
 		matches = append(matches, newMatches[0])
 	}
 	return matches
 }
 
 func (book *OrderBook) execute(match *Match) *Order {
-	debug("Executing: %v\n", match)
+	info("Executing: %v\n", match)
 	match.Maker.Volume -= match.Volume
 	if match.Maker.Volume <= 0.0 {
 		match.Maker.executed = true
-		book.orders[match.Maker.id] = *match.Maker
 	}
 	match.Taker.Volume -= match.Volume
 	if match.Taker.Volume <= 0.0 {
 		match.Taker.executed = true
-		book.orders[match.Taker.id] = *match.Taker
 	}
 	return match.Taker
 }
 
-// getStopMatches returns any matches for stop orders triggered by the match.
+// getStopMatches returns any matches for stop orders triggered by the matches.
 func (book *OrderBook) getTriggeredStops(oldMatches Matches) Matches {
 	matches := Matches{}
 	for _, oldMatch := range oldMatches {
-		for _, stop := range book.stopOrders {
-			stopp := &stop
-			if stop.Side == BuySide && oldMatch.Price > stop.Value2 {
-				// The match triggers this BuySide Stop.
-				stopp.stopTriggered = true
-			} else if stop.Side == SellSide && oldMatch.Price < stop.Value2 {
-				// The match triggers this SellSide Stop.
-				stopp.stopTriggered = true
-			}
-			for !stopp.executed {
-				newMatches := book.getMatches(stopp)
+		// TODO: Each oldMatch.Taker here is an executed order. We know
+		// the oldMatch.Price, and now need to traverse the BST to find if
+		// this price is below any SellSide Stop order's Limit, or above
+		// any BuySide Stop order's Limit. If so, they trigger and we want
+		// to match + execute them, and return the matches.
+		for _, stop := range book.orders.findStops(oldMatch.Price) {
+			for !stop.executed {
+				newMatches := book.getMatches(stop)
 				if len(newMatches) == 0 {
 					break
-				} else {
-					book.execute(newMatches[0])
-					stopp = newMatches[0].Taker
-					book.stopOrders[stopp.id] = *stopp
-					debug("stop order was executed: %v\n", stopp)
-					matches = append(matches, newMatches[0])
 				}
+				book.execute(newMatches[0])
+				debug("stop order was executed: %v\n", stop)
+				matches = append(matches, newMatches[0])
 			}
 		}
 	}
@@ -501,11 +653,13 @@ func main() {
 			log.Fatalf("Failed to read standard input: %v\n", err)
 		}
 		order := newOrder(orderstr)
+		// TODO: Maybe type returned here should be Executions or
+		// something; "matches" is misleading..
 		matches := book.Add(order)
 		for _, match := range matches {
 			fmt.Println(match.Output())
 		}
-		// The matches for order might also trigger stop orders.
+		// The matches for order might have triggered some stop orders.
 		for _, match := range book.getTriggeredStops(matches) {
 			fmt.Println(match.Output())
 		}
