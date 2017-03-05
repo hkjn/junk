@@ -17,3 +17,6 @@ In another terminal, run the client with with:
 ```
 go run client/client.go
 ```
+
+TODO(hkjn): We should be able to have an ELB or any other L4 forward
+`tcp/443` to backends running server.go
