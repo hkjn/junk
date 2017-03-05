@@ -1,0 +1,25 @@
+//  order is "[type] [side] [value1] [value2]
+//  side is "buy" or "sell"
+//  value1 is int, varies
+//  value2 is float, varies
+//  input can be guaranteed to be valid
+//  string values are unquoted
+//  floats are like 99.50
+//  numerical values fit in 64bits
+//  where type is order type, varies:
+//  1. market: order to buy/sell at market value. value1 is positive number of items to trade, value2 is ignored, e.g. "market buy 1000 0.0"
+//   2. limit: order to buy/sell only at specific price. value1 is positive number to trade, value2 is positive price limit where buy limits are to be executed if at or below, sell orders at or above, e.g "limit buy 10 55.0"
+//   3. stop: order to trigger when satisfying given threshold, sell-side stop order (aka stop loss) executes when price is at or below threshold, buy-side stop order when price is at or above threshold. if multiple stop orders would execute same time, oldest ones execute first. once triggered, stop order executes as market order. triggered stop order must execute before any subsequent incoming orders are executed. value2 is positive threshold price at which order should trigger, e.g. "stop buy 20 55.0"
+//   4. cancel: cancels previous order. may cancel partially filled order, cancels any unfilled order entirely. cancelling non-existing, fully executed or previously canceled order is noop. side is ignored, value1 is number of order to cancel, value2 is ignored.
+
+//  order execution is done by matching with one or several opposing orders, by rules:
+//   1. if multiple order can match this order, first match by price limit. when matching sell orer, match highest buy order first. when matching buy order, match lowest sell order first. if multiple matching orders have same price limit, match oldest order first.
+//   2. when order is matched with opposing order, trade occurs. amount of units traded is maximum accomodated by both. price of trade is limit of opposing order. e.g. if incoming sell limit order of 5 units at $99 is matched by buy limit order of 10 units at $100, 5 units are traded at $100 each.
+//   3. execution stops when order is entirely filled or no further matching orders are available. order execution must stop before any other order can execute.
+//   4. orders are executed serially; by time order k+1 is processed, order k has already been processed and if possible executed
+
+//   when two orders are matched, output "match [taker] [maker] [volume] [price]"
+//     where taker is number of order being executed
+//     where maker is number of opposing order that was matched
+//     where volume is number of units traded
+//     where prices is price at which trade occured like 99.05
