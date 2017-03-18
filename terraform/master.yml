@@ -156,4 +156,4 @@ coreos:
         RestartSec=10
   update:
     group: alpha
-    reboot-strategy: always
+    reboot-strategy: reboot

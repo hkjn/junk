@@ -49,6 +49,9 @@ resource "aws_subnet" "tf_subnets" {
   availability_zone = "${element(split(",", var.azs), count.index)}"
   count             = "${length(compact(split(",", var.private_subnets)))}"
 
+  # We enable public IPs for all instances by default to be able to SSH to the workers.
+  map_public_ip_on_launch = true
+
   tags {
     Name          = "${var.env}_tf_subnet_${count.index}"
     orchestration = "terraform"
