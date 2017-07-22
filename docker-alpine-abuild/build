@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# Builds Docker image.
+#
+set -euo pipefail
+
+DOCKER_USER="hkjn"
+DOCKER_IMAGE="alpine-build"
+
+ARCH="$(uname -m)"
+BUILD_DIR="$(mktemp -d)"
+BASEIMAGE="hkjn/alpine:$ARCH"
+TAG="$DOCKER_USER/$DOCKER_IMAGE:$ARCH"
+
+sed "s|{{ARG_FROM}}|${BASEIMAGE}|g" Dockerfile.in > $BUILD_DIR/Dockerfile
+cp abuilder $BUILD_DIR/
+docker build -t $TAG "$BUILD_DIR/"
+NO_PUSH=${NO_PUSH:-""}
+[[ "$NO_PUSH" ]] || docker push $TAG
+
