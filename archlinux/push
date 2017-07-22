@@ -1,0 +1,10 @@
+#!/bin/bash -ex
+
+ORGA=hkjn
+ARCH=$(uname -m)
+
+for repo in base base-devel; do
+	docker push ${ORGA}/arch:$ARCH-$repo
+done
+
+

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -euxo pipefail
+
+TEAM=hkjn
+ARCH=$(uname -m)
+NO_PUSH=${NO_PUSH:-""}
+
+for repo in base base-devel; do
+	docker build -f Dockerfile.${repo} -t archimg-${repo} .
+	docker-squash -t archimg-${repo} archimg-${repo}
+  docker tag archimg-${repo} ${TEAM}/arch:${ARCH}-${repo}
+done
+
+[[ "$NO_PUSH" ]] || {
+  docker tag archimg-base ${TEAM}/arch:${ARCH}
+  docker push ${TEAM}/arch:${ARCH}
+}
