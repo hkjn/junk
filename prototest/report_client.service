@@ -1,0 +1,20 @@
+#
+# This is a systemd service for running a system report_client, which should be copied
+# to /usr/lib/systemd/user/ to enable it as a user service.
+#
+# It can then be started with systemctl --user start report_client.service.
+#
+[Unit]
+Description=report
+After=network-online.target
+
+[Service]
+# Environment=REPORT_ADDR=mon.hkjn.me:50051
+Environment=REPORT_NAME=%H
+Environment=REPORT_DEBUGGING=true
+Environment=REPORT_FACTS_PATH=/etc/reporter/facts.json
+ExecStartPre=-/bin/bash -c "gather_facts > /etc/reporter/facts.json"
+ExecStart=/bin/bash -c report_client
+
+[Install]
+WantedBy=network-online.target

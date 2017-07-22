@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#
+# Gather facts around the environment and output them in JSON format.
+#
+FACTS=$(cat <<EOT
+{
+	"cpu_arch": "$(uname -m)",
+	"hostname": "$(hostname)",
+	"kernel_name": "$(uname -s)",
+	"kernel_version": "$(uname -r)",
+	"machine_type": "$(uname -m)",
+	"platform": "baremetal",
+	"memory_total_mb": "$(free -m | awk '/Mem:/ { print $2 }')",
+	"memory_avail_mb": "$(free -m | awk '/Mem:/ { print $7 }')"
+}
+EOT
+)
+echo "$FACTS"
