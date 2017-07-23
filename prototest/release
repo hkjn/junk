@@ -48,7 +48,7 @@ git tag $VERSION $COMMIT
 git push origin --tags
 
 info "Creating release.."
-declare RESPONSE=$(curl \
+declare RESPONSE=$(curl -s \
      -H "Content-type: application/json" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
@@ -66,11 +66,13 @@ curl -H "Content-type: application/octet-stream" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data-binary @report_client \
-     "${URL}?name=report_client"
+     --progress-bar \ 
+     "${URL}?name=report_client" | tee -a "upload_progress.log" ; test ${PIPESTATUS[0]} -eq 0
 
 info "Uploading report_server.."
 curl -H "Content-type: application/octet-stream" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data-binary @report_server \
-     "${URL}?name=report_server"
+     --progress-bar \
+     "${URL}?name=report_server" | tee -a "upload_progress.log" ; test ${PIPESTATUS[0]} -eq 0
