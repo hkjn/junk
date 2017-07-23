@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	pb "hkjn.me/prototest/report"
+	pb "hkjn.me/junk/prototest/report"
 )
 
 const defaultPort = ":50051"
@@ -52,7 +52,7 @@ func newRpcServer() *grpc.Server {
 	s := &reportServer{map[string]clientInfo{}}
 	pb.RegisterReportServer(rpcServer, s)
 	log.Printf("Registering GreeterServer to tcp listener on %q..\n", defaultPort)
-	go s.checkClients()
+	// go s.maybeExpireClients()
 	reflection.Register(rpcServer)
 	return rpcServer
 
@@ -124,8 +124,8 @@ func (s *reportServer) Send(ctx context.Context, req *pb.Request) (*pb.Response,
 	return &pb.Response{Message: resp}, nil
 }
 
-// checkClients runs forever, and periodically checks if any clients expired.
-func (s *reportServer) checkClients() {
+// maybeExpireClients runs forever, and periodically checks if any clients expired.
+func (s *reportServer) maybeExpireClients() {
 	log.Printf("Checking if any clients fell out of touch..")
 	maxTime := time.Minute * 10
 	for {

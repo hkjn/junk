@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+load() {
+	local ns="hkjn.me"
+	local p="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+	while [ "$p" != "" ] && [ $(basename $p) != "$ns" ]; do p="${p/\/$(basename $p)/}"; done
+	source "$p/lib/$1" 2>/dev/null || { echo "[$0] FATAL: Couldn't find $ns/lib/$1." >&2; exit 1; }
+	export BASE="$p"
+}
+load "logging.sh"
+cd "$BASE/junk/prototest"
+
+declare VERSION="$(cat VERSION)"
+info "About to release v${VERSION} of prototest."
+confirm
+
+info "Building report_client.."
+go build -o report_client ./client/
+info "Building report_server.."
+go build -o report_server ./server/
+
+# TODO: Verify repo is in clean state, as repo_report would see it, before tagging and releasing.
+
+git tag $VERSION
+git push origin --tags
+

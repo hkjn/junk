@@ -11,7 +11,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	pb "hkjn.me/prototest/report"
+	pb "hkjn.me/junk/prototest/report"
 )
 
 const (
