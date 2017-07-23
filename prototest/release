@@ -48,7 +48,7 @@ git tag $VERSION $COMMIT
 git push origin --tags
 
 info "Creating release.."
-declare RESPONSE=$(curl -s \
+declare RESPONSE=$(curl -v \
      -H "Content-type: application/json" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
