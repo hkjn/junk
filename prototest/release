@@ -55,29 +55,31 @@ declare RESPONSE=$(curl -s \
      --data "$PAYLOAD" \
      https://api.github.com/repos/hkjn/junk/releases)
 
-debug "Response is: $RESPONSE"
+debugV "Response is: $RESPONSE"
 declare URL=$(echo "$RESPONSE" | jq -r ".upload_url")
 [[ "$URL" ]] && [[ "$URL" != "null" ]] || fatal "Couldn't get upload_url from Github response: $RESPONSE"
-debug "URL is '$URL'"
+debugV "URL is '$URL'"
 URL=${URL%\{?name,label\}}
-debug "Stripped URL is '$URL'"
+debugV "Stripped URL is '$URL'"
 
 info "Uploading report_client.."
-curl -s \
+RESPONSE=$(curl \
      -H "Content-type: application/octet-stream" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data-binary @report_client \
      --progress-bar \
-     "${URL}?name=report_client" | tee /dev/null
+     "${URL}?name=report_client" | tee /dev/null)
+debugV "Upload response for report_client: $RESPONSE"
 [[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload report_client"
 
 info "Uploading report_server.."
-curl -s \
+RESPONSE=$(curl \
      -H "Content-type: application/octet-stream" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data-binary @report_server \
      --progress-bar \
-     "${URL}?name=report_server" | tee /dev/null
+     "${URL}?name=report_server" | tee /dev/null)
+debugV "Upload response for report_server: $RESPONSE"
 [[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload report_server"
