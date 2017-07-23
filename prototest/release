@@ -39,6 +39,10 @@ declare PAYLOAD=$(cat <<EOT
 }
 EOT
 )
+info "Syncing down changes from remote.."
+git pull
+info "Pushing any changes to remote.."
+git push
 info "Tagging $VERSION at $COMMIT.."
 git tag $VERSION $COMMIT
 git push origin --tags
@@ -51,11 +55,11 @@ declare RESPONSE=$(curl \
      --data "$PAYLOAD" \
      https://api.github.com/repos/hkjn/junk/releases)
 
-debug "Response is: $RESPONSE"
+debugV "Response is: $RESPONSE"
 declare URL=$(echo "$RESPONSE" | jq -r ".upload_url")
-debug "URL is '$URL'"
+debugV "URL is '$URL'"
 URL=${URL%\{?name,label\}}
-debug "Stripped URL is '$URL'"
+debugV "Stripped URL is '$URL'"
 
 info "Uploading report_client.."
 curl -H "Content-type: application/octet-stream" \
