@@ -23,14 +23,14 @@ export GITHUB_TOKEN=${GITHUB_TOKEN:-""}
 info "About to release v${VERSION} of prototest at $COMMIT: '$COMMIT_MSG'."
 confirm
 
-info "Building report_client for amd64.."
+info "Building report_client_amd64.."
 GOARCH=amd64 go build -o report_client_amd64 ./client/
-info "Building report_server for amd64.."
+info "Building report_server_amd64.."
 GOARCH=amd64  go build -o report_server_amd64 ./server/
 
-info "Building report_client for arm.."
+info "Building report_client_arm.."
 GOARCH=arm go build -o report_client_arm ./client/
-info "Building report_server for arm.."
+info "Building report_server_arm.."
 GOARCH=arm  go build -o report_server_arm ./server/
 
 # TODO: Verify repo is in clean state, as repo_report would see it, before tagging and releasing.
@@ -81,7 +81,7 @@ upload() {
   [[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload $1"
 }
 
-upload report_client_amd64
-upload report_server_amd64
-upload report_client_arm
-upload report_server_arm
+upload report_client_amd64 $URL
+upload report_server_amd64 $URL
+upload report_client_arm $URL
+upload report_server_arm $URL
