@@ -15,6 +15,10 @@ cd "$BASE/junk/prototest"
 declare VERSION="$(cat VERSION)"
 declare COMMIT=$(git log -1 --pretty=format:"%h")
 declare COMMIT_MSG=$(git log --format=%B -n 1)
+export GITHUB_TOKEN=${GITHUB_TOKEN:-""}
+[[ "$GITHUB_TOKEN" ]] || {
+  fatal "No GITHUB_TOKEN set in environment.o"
+}
 
 info "About to release v${VERSION} of prototest at $COMMIT: '$COMMIT_MSG'."
 confirm
@@ -35,15 +39,36 @@ declare PAYLOAD=$(cat <<EOT
 }
 EOT
 )
-export GITHUB_TOKEN=${GITHUB_TOKEN:-""}
-[[ "$GITHUB_TOKEN" ]] || {
-  fatal "No GITHUB_TOKEN set in environment.o"
-}
+info "Tagging $VERSION at $COMMIT.."
 git tag $VERSION $COMMIT
 git push origin --tags
-curl -v -X POST \
+
+info "Creating release.."
+declare RESPONSE=$(curl -v -X POST \
      -H "Content-type: application/json" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data "$PAYLOAD" \
-     https://api.github.com/repos/hkjn/junk/releases
+     https://api.github.com/repos/hkjn/junk/releases)
+
+debug "Response is: $RESPONSE"
+declare URL=$(echo "$RESPONSE" | jq ".upload_url")
+debug "URL is '$URL'"
+URL=${URL%\{?name,label\}}
+debug "Stripped URL is '$URL'"
+
+info "Uploading report_client.."
+curl -v -X POST \
+     -H "Content-type: application/octet-stream" \
+     -H "Accept: application/vnd.github.v3+json" \
+     -H "Authorization: token $GITHUB_TOKEN" \
+     --data-binary @report_client \
+     "${URL}?name=report_client"
+
+info "Uploading report_server.."
+curl -v -X POST \
+     -H "Content-type: application/octet-stream" \
+     -H "Accept: application/vnd.github.v3+json" \
+     -H "Authorization: token $GITHUB_TOKEN" \
+     --data-binary @report_server \
+     "${URL}?name=report_server"
