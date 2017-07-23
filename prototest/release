@@ -40,7 +40,7 @@ export GITHUB_TOKEN=${GITHUB_TOKEN:-""}
 [[ "$GITHUB_TOKEN" ]] || {
   fatal "No GITHUB_TOKEN set in environment.o"
 }
-git tag $VERSION
+git tag $VERSION $COMMIT
 git push origin --tags
 curl -v -X POST \
      -H "Content-type: application/json" \
