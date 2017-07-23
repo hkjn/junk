@@ -31,7 +31,7 @@ GOARCH=amd64  go build -o report_server_amd64 ./server/
 info "Building report_client_arm.."
 GOARCH=arm go build -o report_client_arm ./client/
 info "Building report_server_arm.."
-GOARCH=arm  go build -o report_server_arm ./server/
+GOARCH=arm go build -o report_server_arm ./server/
 
 # TODO: Verify repo is in clean state, as repo_report would see it, before tagging and releasing.
 declare PAYLOAD=$(cat <<EOT
@@ -68,6 +68,7 @@ URL=${URL%\{?name,label\}}
 debugV "Stripped URL is '$URL'"
 
 upload() {
+  [[ $? -ne 2 ]] && fatal "usage: upload file url"
   info "Uploading $1 to $2.."
   local response
   response=$(curl \
