@@ -13,7 +13,10 @@ load "logging.sh"
 cd "$BASE/junk/prototest"
 
 declare VERSION="$(cat VERSION)"
-info "About to release v${VERSION} of prototest."
+declare COMMIT=$(git log -1 --pretty=format:"%h")
+declare COMMIT_MSG=$(git log --format=%B -n 1)
+
+info "About to release v${VERSION} of prototest at $COMMIT: '$COMMIT_MSG'."
 confirm
 
 info "Building report_client.."
@@ -22,7 +25,26 @@ info "Building report_server.."
 go build -o report_server ./server/
 
 # TODO: Verify repo is in clean state, as repo_report would see it, before tagging and releasing.
-
+declare PAYLOAD=$(cat <<EOT
+{
+  "tag_name": "$VERSION",
+  "target_commitish": "$COMMIT",
+  "name": "$VERSION",
+  "body": "$COMMIT_MSG",
+  "draft": false,
+  "prerelease": false
+}
+EOT
+)
+export GITHUB_TOKEN=${GITHUB_TOKEN:-""}
+[[ "$GITHUB_TOKEN" ]] || {
+  fatal "No GITHUB_TOKEN set in environment.o"
+}
 git tag $VERSION
 git push origin --tags
-
+curl -v -X POST \
+     -H "Content-type: application/json" \
+     -H "Accept: application/vnd.github.v3+json" \
+     -H "Authorization: token $GITHUB_TOKEN" \
+     --data "$PAYLOAD" \
+     https://api.github.com/repos/hkjn/junk/releases
