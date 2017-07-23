@@ -55,9 +55,9 @@ declare RESPONSE=$(curl -s \
      --data "$PAYLOAD" \
      https://api.github.com/repos/hkjn/junk/releases)
 
-debugV "Response is: $RESPONSE"
+debug "Response is: $RESPONSE"
 declare URL=$(echo "$RESPONSE" | jq -r ".upload_url")
-debugV "URL is '$URL'"
+debug "URL is '$URL'"
 URL=${URL%\{?name,label\}}
 debug "Stripped URL is '$URL'"
 
