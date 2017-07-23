@@ -17,7 +17,7 @@ declare COMMIT=$(git log -1 --pretty=format:"%h")
 declare COMMIT_MSG=$(git log --format=%B -n 1)
 export GITHUB_TOKEN=${GITHUB_TOKEN:-""}
 [[ "$GITHUB_TOKEN" ]] || {
-  fatal "No GITHUB_TOKEN set in environment.o"
+  fatal "No GITHUB_TOKEN set in environment."
 }
 
 info "About to release v${VERSION} of prototest at $COMMIT: '$COMMIT_MSG'."
@@ -59,15 +59,16 @@ debugV "Response is: $RESPONSE"
 declare URL=$(echo "$RESPONSE" | jq -r ".upload_url")
 debugV "URL is '$URL'"
 URL=${URL%\{?name,label\}}
-debugV "Stripped URL is '$URL'"
+debug "Stripped URL is '$URL'"
 
 info "Uploading report_client.."
 curl -H "Content-type: application/octet-stream" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data-binary @report_client \
-     --progress-bar \ 
-     "${URL}?name=report_client" | tee -a "upload_progress.log" ; test ${PIPESTATUS[0]} -eq 0
+     --progress-bar \
+     "${URL}?name=report_client" | tee /dev/null
+[[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload report_client"
 
 info "Uploading report_server.."
 curl -H "Content-type: application/octet-stream" \
@@ -75,4 +76,5 @@ curl -H "Content-type: application/octet-stream" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data-binary @report_server \
      --progress-bar \
-     "${URL}?name=report_server" | tee -a "upload_progress.log" ; test ${PIPESTATUS[0]} -eq 0
+     "${URL}?name=report_server" | tee /dev/null
+[[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload report_server"
