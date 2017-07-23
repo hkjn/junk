@@ -48,7 +48,7 @@ git tag $VERSION $COMMIT
 git push origin --tags
 
 info "Creating release.."
-declare RESPONSE=$(curl -v \
+declare RESPONSE=$(curl -s \
      -H "Content-type: application/json" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
@@ -63,7 +63,8 @@ URL=${URL%\{?name,label\}}
 debug "Stripped URL is '$URL'"
 
 info "Uploading report_client.."
-curl -H "Content-type: application/octet-stream" \
+curl -s \
+     -H "Content-type: application/octet-stream" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data-binary @report_client \
@@ -72,7 +73,8 @@ curl -H "Content-type: application/octet-stream" \
 [[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload report_client"
 
 info "Uploading report_server.."
-curl -H "Content-type: application/octet-stream" \
+curl -s \
+     -H "Content-type: application/octet-stream" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data-binary @report_server \
