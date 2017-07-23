@@ -23,10 +23,15 @@ export GITHUB_TOKEN=${GITHUB_TOKEN:-""}
 info "About to release v${VERSION} of prototest at $COMMIT: '$COMMIT_MSG'."
 confirm
 
-info "Building report_client.."
-go build -o report_client ./client/
-info "Building report_server.."
-go build -o report_server ./server/
+info "Building report_client for amd64.."
+GOARCH=amd64 go build -o report_client_amd64 ./client/
+info "Building report_server for amd64.."
+GOARCH=amd64  go build -o report_server_amd64 ./server/
+
+info "Building report_client for arm.."
+GOARCH=arm go build -o report_client_arm ./client/
+info "Building report_server for arm.."
+GOARCH=arm  go build -o report_server_arm ./server/
 
 # TODO: Verify repo is in clean state, as repo_report would see it, before tagging and releasing.
 declare PAYLOAD=$(cat <<EOT
@@ -62,24 +67,21 @@ debugV "URL is '$URL'"
 URL=${URL%\{?name,label\}}
 debugV "Stripped URL is '$URL'"
 
-info "Uploading report_client.."
-RESPONSE=$(curl \
+upload() {
+  info "Uploading $1 to $2.."
+  local response
+  response=$(curl \
      -H "Content-type: application/octet-stream" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
-     --data-binary @report_client \
+     --data-binary @${1} \
      --progress-bar \
-     "${URL}?name=report_client" | tee /dev/null)
-debugV "Upload response for report_client: $RESPONSE"
-[[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload report_client"
+     "${2}?name=${1}" | tee /dev/null)
+  debugV "Upload response for $1: $response"
+  [[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload $1"
+}
 
-info "Uploading report_server.."
-RESPONSE=$(curl \
-     -H "Content-type: application/octet-stream" \
-     -H "Accept: application/vnd.github.v3+json" \
-     -H "Authorization: token $GITHUB_TOKEN" \
-     --data-binary @report_server \
-     --progress-bar \
-     "${URL}?name=report_server" | tee /dev/null)
-debugV "Upload response for report_server: $RESPONSE"
-[[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload report_server"
+upload report_client_amd64
+upload report_server_amd64
+upload report_client_arm
+upload report_server_arm
