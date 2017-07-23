@@ -24,9 +24,10 @@ info "About to release v${VERSION} of prototest at $COMMIT: '$COMMIT_MSG'."
 confirm
 
 info "Building report_client_amd64.."
+export CGO_ENABLED=0
 GOARCH=amd64 go build -o report_client_amd64 ./client/
 info "Building report_server_amd64.."
-GOARCH=amd64  go build -o report_server_amd64 ./server/
+GOARCH=amd64 go build -o report_server_amd64 ./server/
 
 info "Building report_client_arm.."
 GOARCH=arm go build -o report_client_arm ./client/
@@ -34,6 +35,15 @@ info "Building report_server_arm.."
 GOARCH=arm go build -o report_server_arm ./server/
 
 # TODO: Verify repo is in clean state, as repo_report would see it, before tagging and releasing.
+info "Syncing down changes from remote.."
+git pull
+info "Pushing any changes to remote.."
+git push
+info "Tagging $VERSION at $COMMIT.."
+git tag $VERSION $COMMIT
+git push origin --tags
+
+info "Creating release.."
 declare PAYLOAD=$(cat <<EOT
 {
   "tag_name": "$VERSION",
@@ -44,15 +54,6 @@ declare PAYLOAD=$(cat <<EOT
 }
 EOT
 )
-info "Syncing down changes from remote.."
-git pull
-info "Pushing any changes to remote.."
-git push
-info "Tagging $VERSION at $COMMIT.."
-git tag $VERSION $COMMIT
-git push origin --tags
-
-info "Creating release.."
 declare RESPONSE=$(curl -s \
      -H "Content-type: application/json" \
      -H "Accept: application/vnd.github.v3+json" \
@@ -68,7 +69,7 @@ URL=${URL%\{?name,label\}}
 debugV "Stripped URL is '$URL'"
 
 upload() {
-  [[ $? -ne 2 ]] && fatal "usage: upload file url"
+  [[ $# -ne 2 ]] && fatal "usage: upload file url"
   info "Uploading $1 to $2.."
   local response
   response=$(curl \
