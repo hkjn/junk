@@ -61,7 +61,7 @@ declare URL=$(echo "$RESPONSE" | jq -r ".upload_url")
 debugV "URL is '$URL'"
 URL=${URL%\{?name,label\}}
 debugV "Stripped URL is '$URL'"
-rm report_client report_server && echo wutt > report_client && echo watt > report_server # FIXMEH
+
 info "Uploading report_client.."
 RESPONSE=$(curl \
      -H "Content-type: application/octet-stream" \
