@@ -44,7 +44,7 @@ git tag $VERSION $COMMIT
 git push origin --tags
 
 info "Creating release.."
-declare RESPONSE=$(curl -v -X POST \
+declare RESPONSE=$(curl \
      -H "Content-type: application/json" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
@@ -52,22 +52,20 @@ declare RESPONSE=$(curl -v -X POST \
      https://api.github.com/repos/hkjn/junk/releases)
 
 debug "Response is: $RESPONSE"
-declare URL=$(echo "$RESPONSE" | jq ".upload_url")
+declare URL=$(echo "$RESPONSE" | jq -r ".upload_url")
 debug "URL is '$URL'"
 URL=${URL%\{?name,label\}}
 debug "Stripped URL is '$URL'"
 
 info "Uploading report_client.."
-curl -v -X POST \
-     -H "Content-type: application/octet-stream" \
+curl -H "Content-type: application/octet-stream" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data-binary @report_client \
      "${URL}?name=report_client"
 
 info "Uploading report_server.."
-curl -v -X POST \
-     -H "Content-type: application/octet-stream" \
+curl -H "Content-type: application/octet-stream" \
      -H "Accept: application/vnd.github.v3+json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      --data-binary @report_server \
