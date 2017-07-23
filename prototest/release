@@ -57,6 +57,7 @@ declare RESPONSE=$(curl -s \
 
 debug "Response is: $RESPONSE"
 declare URL=$(echo "$RESPONSE" | jq -r ".upload_url")
+[[ "$URL" ]] || fatal "Couldn't get upload_url from Github response: $RESPONSE"
 debug "URL is '$URL'"
 URL=${URL%\{?name,label\}}
 debug "Stripped URL is '$URL'"
