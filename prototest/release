@@ -28,7 +28,6 @@ go build -o report_server ./server/
 declare PAYLOAD=$(cat <<EOT
 {
   "tag_name": "$VERSION",
-  "target_commitish": "$COMMIT",
   "name": "$VERSION",
   "body": "$COMMIT_MSG",
   "draft": false,
