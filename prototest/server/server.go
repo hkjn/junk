@@ -28,9 +28,17 @@ var (
 )
 
 type (
+	// clientInfo represents info about a client that has
+	// reported to us.
+	//
 	clientInfo struct {
+		// lastSeen is the last time we heard from the client.
 		lastSeen time.Time
-		info     map[string]string
+		// outOfTouch is true if we consider the client "out of touch",
+		// i.e. we haven't heard from it in some time.
+		outOfTouch bool
+		// info is the map of extra info reported by the client.
+		info map[string]string
 	}
 	// reportServer is used to implement report.GreeterServer.
 	reportServer struct {
@@ -52,7 +60,7 @@ func newRpcServer() *grpc.Server {
 	s := &reportServer{map[string]clientInfo{}}
 	pb.RegisterReportServer(rpcServer, s)
 	log.Printf("Registering GreeterServer to tcp listener on %q..\n", defaultPort)
-	// go s.maybeExpireClients()
+	go s.maybeExpireClients()
 	reflection.Register(rpcServer)
 	return rpcServer
 
@@ -138,7 +146,9 @@ func (s *reportServer) maybeExpireClients() {
 					time.Since(v.lastSeen),
 				)
 				log.Println(msg)
-				delete(s.clients, name)
+				log.Printf("Marking %q as being 'out of touch'..", name)
+				c := s.clients[name]
+				c.outOfTouch = true
 				sendSlack(msg)
 			}
 		}
@@ -147,7 +157,7 @@ func (s *reportServer) maybeExpireClients() {
 
 func main() {
 	if slackToken == "" {
-		log.Fatalf("No SLACK_TOKEN specified.\n")
+		log.Fatalf("No REPORT_SLACK_TOKEN specified.\n")
 	}
 	rpcServer := newRpcServer()
 	lis, err := net.Listen("tcp", defaultPort)
