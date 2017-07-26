@@ -90,6 +90,7 @@ func sendSlack(msg string) error {
 		log.Printf("Failed to send to Slack: %v\n", err)
 		return err
 	}
+	defer resp.Body.Close()
 	debug("Slack replied: %v\n", resp)
 	return nil
 }
