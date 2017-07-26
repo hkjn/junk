@@ -34,9 +34,9 @@ type (
 	clientInfo struct {
 		// lastSeen is the last time we heard from the client.
 		lastSeen time.Time
-		// outOfTouch is true if we consider the client "out of touch",
-		// i.e. we haven't heard from it in some time.
-		outOfTouch bool
+		// sentGoodbye is true if we haven't heard from client in some
+		// time and have sent a message about it.
+		sentGoodbye bool
 		// info is the map of extra info reported by the client.
 		info map[string]string
 	}
@@ -141,15 +141,17 @@ func (s *reportServer) maybeExpireClients() {
 		for name, v := range s.clients {
 			if time.Since(v.lastSeen) > maxTime {
 				msg := fmt.Sprintf(
-					"Haven't heard from %q in %v, going to forget about them",
+					"Node %q fell out of touch; haven't heard from them in %v",
 					name,
 					time.Since(v.lastSeen),
 				)
-				log.Println(msg)
-				log.Printf("Marking %q as being 'out of touch'..", name)
 				c := s.clients[name]
-				c.outOfTouch = true
-				sendSlack(msg)
+				if !c.sentGoodbye {
+					c.sentGoodbye = true
+					log.Println(msg)
+					sendSlack(msg)
+				}
+				log.Printf("Marking %q as being 'out of touch'..", name)
 			}
 		}
 	}
