@@ -27,16 +27,8 @@ preflight_checks() {
 }
 
 build_binaries() {
-  info "Building report_client_amd64.."
-  export CGO_ENABLED=0
-  GOARCH=amd64 go build -o report_client_amd64 ./client/
-  info "Building report_server_amd64.."
-  GOARCH=amd64 go build -o report_server_amd64 ./server/
-
-  info "Building report_client_arm.."
-  GOARCH=arm go build -o report_client_arm ./client/
-  info "Building report_server_arm.."
-  GOARCH=arm go build -o report_server_arm ./server/
+  info "Building binaries.."
+  ./build
 }
 
 create_tag() {
@@ -102,5 +94,6 @@ create_release
 
 upload report_client_amd64 $URL
 upload report_server_amd64 $URL
-upload report_client_arm $URL
-upload report_server_arm $URL
+# TODO(hkjn): Reenable arm builds when dockerized builds works (c.f. build).
+# upload report_client_arm $URL
+# upload report_server_arm $URL
