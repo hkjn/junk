@@ -94,6 +94,5 @@ create_release
 
 upload report_client_amd64 $URL
 upload report_server_amd64 $URL
-# TODO(hkjn): Reenable arm builds when dockerized builds works (c.f. build).
-# upload report_client_arm $URL
-# upload report_server_arm $URL
+upload report_client_arm $URL
+upload report_server_arm $URL
