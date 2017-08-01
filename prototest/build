@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-declare BASE_IMAGE="hkjn/golang:$(uname -m)"
+declare BASE_IMAGE="hkjn/golang:$(uname -m)-tip"
 declare BUILD_DIR="$(mktemp -d)"
 
 echo "Building in $BASE_IMAGE.."

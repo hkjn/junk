@@ -1,5 +1,5 @@
 FROM {{ARG_FROM}}
-USER root
+
 ENV GOOS=linux \
     CGO_ENABLED=0
 WORKDIR /home/go/src/hkjn.me/junk/prototest
@@ -7,24 +7,17 @@ COPY ["client", "./client"]
 COPY ["server", "./server"]
 COPY ["report", "./report"]
 COPY ["vendor", "./vendor"]
-RUN apk add --no-cache musl-dev && \
-    mkdir -p /home/go/bin
 
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags '-extldflags "-static"' -o /home/go/bin/report_client_amd64 ./client/
-# RUN sh -c "GOARCH=amd64 go build -o report_client_amd64 ./client/"
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags '-extldflags "-static"' -o /home/go/bin/report_server_amd64 ./server/
-# RUN sh -c "GOARCH=amd64 go build -o report_server_amd64 ./server/"
-# TODO(hkjn): Find cause of issues when trying to build towards arm:
-# warning: unable to find runtime/cgo.a
-# /usr/lib/go/pkg/tool/linux_amd64/link: running gcc failed: exit status1
-# gcc: error: unrecognized command line option '-marm'; did you mean '-mabm'?
-# RUN GOARCH=arm go build -ldflags '-extldflags "-static"' -o report_server_arm ./server/
-# RUN GOARCH=arm GOARM=7 go build -ldflags '-d -s -w' -a -tags netgo -installsuffix netgo -o report_server_arm ./server/
-# RUN GOARCH=arm GOARM=7 go build -ldflags '-d -s -w' -a -tags netgo -installsuffix netgo -o report_client_arm ./client/
-# RUN GOARCH=arm go build -ldflags '-extldflags "-static"' -o report_client_arm ./client/
-#RUN sh -c "CGO_ENABLED=0 GOARCH=arm go build -o report_client_arm ./client/"
-#RUN "GOARCH=arm go build -o report_server_arm ./server/"
-CMD cd /home/go/bin && \
-    echo "Binaries available in $(pwd): $(ls report_*)"
+USER root
+RUN apk add --no-cache musl-dev
+USER go
+
+RUN sh -c "GOARCH=amd64 go build -o ~/bin/report_client_amd64 ./client/"
+RUN sh -c "GOARCH=amd64 go build -o ~/bin/report_server_amd64 ./server/"
+RUN sh -c "GOARCH=arm go build -o ~/bin/report_client_arm ./client/"
+RUN sh -c "GOARCH=arm go build -o ~/bin/report_server_arm ./server/"
+WORKDIR /home/go/bin
+RUN pwd && ls -hsal ~/bin && ls -hsal
+CMD echo "Binaries available in $(pwd): $(ls report_*)"
 
 

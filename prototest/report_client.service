@@ -14,8 +14,8 @@ Environment=REPORT_NAME=%H
 # Environment=REPORT_DEBUGGING=true
 Environment=REPORT_FACTS_PATH=/etc/reporter/facts.json
 EnvironmentFile=/etc/shared.env
-ExecStartPre=-/bin/bash -c "gather_facts > /etc/reporter/facts.json"
-ExecStart=/bin/bash -c report_client
+ExecStartPre=-/bin/bash -c "/opt/bin/gather_facts > /etc/reporter/facts.json"
+ExecStart=/opt/bin/report_client
 
 [Install]
 WantedBy=network-online.target
