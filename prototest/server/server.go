@@ -149,6 +149,7 @@ func (s *reportServer) maybeExpireClients() {
 				c := s.clients[name]
 				if !c.sentGoodbye {
 					c.sentGoodbye = true
+					s.clients[name] = c
 					log.Println(msg)
 					sendSlack(msg)
 				}
