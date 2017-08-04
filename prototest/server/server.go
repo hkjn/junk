@@ -148,12 +148,12 @@ func (s *reportServer) maybeExpireClients() {
 				)
 				c := s.clients[name]
 				if !c.sentGoodbye {
+					log.Printf("Have not sent goodbye to client %v, doing that..")
 					c.sentGoodbye = true
 					s.clients[name] = c
 					log.Println(msg)
 					sendSlack(msg)
 				}
-				log.Printf("Marking %q as being 'out of touch'..", name)
 			}
 		}
 	}
