@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Send a message to slack.
+#
+set -euo pipefail
+
+declare MESSAGE="${1:-}"
+declare SLACKTOKEN="${SLACKTOKEN:-$(cat /etc/secrets/slack/token.asc)}" 
+declare RESPONSE=""
+
+if [[ "$#" -ne 1 ]]; then
+  echo "Usage is $0 'Message for slack'" >&2
+  exit 1
+fi
+
+echo "Sending a message '$MESSAGE' to slack"
+RESPONSE=$(curl -s -H 'Content-type: application/json' \
+                --data "{\"text\":\"$MESSAGE\"}" \
+                https://hooks.slack.com/services/$SLACKTOKEN)
+
+if [[ "$RESPONSE" != "ok" ]]; then
+  echo "FATAL: Bad Slack response: '$RESPONSE'" >&2
+  exit 1
+fi
+

@@ -1,0 +1,17 @@
+#
+# Install the latest version of the server.
+#
+set -euo pipefail
+
+declare VERSION_URL="https://raw.githubusercontent.com/hkjn/junk/master/prototest/VERSION"
+declare SERVER_URL="https://github.com/hkjn/junk/releases/download/${VERSION}/report_server_$(uname -m)"
+declare VERSION="$(curl ${VERSION_URL})"
+
+fetch() {
+	echo "Fetching report_server binary ${VERSION}.."
+	curl -vfsSLo report_server ${SERVER_URL}
+	chmod +x report_server
+	sudo mv report_server /usr/local/bin/
+}
+
+fetch

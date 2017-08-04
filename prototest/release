@@ -1,5 +1,6 @@
-#!/usr/bin/env bash
-
+#
+# Push a release of the project.
+#
 set -euo pipefail
 
 load() {
@@ -15,7 +16,8 @@ cd "$BASE/junk/prototest"
 declare VERSION="$(cat VERSION)"
 declare COMMIT=$(git log -1 --pretty=format:"%h")
 declare COMMIT_MSG=$(git log --format=%B -n 1)
-export GITHUB_TOKEN=${GITHUB_TOKEN:-""}
+declare GITHUB_TOKEN=${GITHUB_TOKEN:-"$(cat /etc/secrets/github/release_token)"}
+declare PROJECT_URL="https://github.com/hkjn/junk/commit"
 
 preflight_checks() {
   [[ "$GITHUB_TOKEN" ]] || {
@@ -74,17 +76,17 @@ EOT
   response=$(curl -s \
      -H "Content-type: application/json" \
      -H "Accept: application/vnd.github.v3+json" \
-     -H "Authorization: token $GITHUB_TOKEN" \
-     --data "$payload" \
+     -H "Authorization: token ${GITHUB_TOKEN}" \
+     --data "${payload}" \
      https://api.github.com/repos/hkjn/junk/releases)
 
-  debugV "Response is: $response"
+  debugV "Response is: ${response}"
   local url
-  url=$(echo "$response" | jq -r ".upload_url")
-  [[ "$url" ]] && [[ "$url" != "null" ]] || fatal "Couldn't get upload_url from Github response: $response"
-  debugV "URL is '$url'"
+  url=$(echo "${response}" | jq -r ".upload_url")
+  [[ "${url}" ]] && [[ "${url}" != "null" ]] || fatal "Couldn't get upload_url from Github response: ${response}"
+  debugV "URL is '${url}'"
   export URL=${url%\{?name,label\}}
-  debugV "Stripped url is '$URL'"
+  debugV "Stripped url is '${URL}'"
 }
 
 preflight_checks
@@ -92,7 +94,8 @@ build_binaries
 create_tag
 create_release
 
-upload report_client_amd64 $URL
-upload report_server_amd64 $URL
-upload report_client_arm $URL
-upload report_server_arm $URL
+upload report_client_x86_64 ${URL}
+upload report_server_x64_64 ${URL}
+upload report_client_arm7l ${URL}
+upload report_server_arm7l ${URL}
+./sendslack "Uploaded \`${VERSION}\`: ${PROJECT_URL}/${COMMIT}"
