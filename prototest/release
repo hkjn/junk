@@ -95,7 +95,7 @@ create_tag
 create_release
 
 upload report_client_x86_64 ${URL}
-upload report_server_x64_64 ${URL}
+upload report_server_x86_64 ${URL}
 upload report_client_arm7l ${URL}
 upload report_server_arm7l ${URL}
 ./sendslack "Uploaded \`${VERSION}\`: ${PROJECT_URL}/${COMMIT}"

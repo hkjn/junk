@@ -4,8 +4,8 @@
 set -euo pipefail
 
 declare VERSION_URL="https://raw.githubusercontent.com/hkjn/junk/master/prototest/VERSION"
-declare SERVER_URL="https://github.com/hkjn/junk/releases/download/${VERSION}/report_server_$(uname -m)"
 declare VERSION="$(curl ${VERSION_URL})"
+declare SERVER_URL="https://github.com/hkjn/junk/releases/download/${VERSION}/report_server_$(uname -m)"
 
 fetch() {
 	echo "Fetching report_server binary ${VERSION}.."
