@@ -3,8 +3,8 @@
 #
 set -euo pipefail
 
-declare VERSION_URL="https://raw.githubusercontent.com/hkjn/junk/master/prototest/VERSION"
-declare VERSION="$(curl ${VERSION_URL})"
+declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+declare VERSION="$(cat VERSION)"
 declare SERVER_URL="https://github.com/hkjn/junk/releases/download/${VERSION}/report_server_$(uname -m)"
 
 fetch() {
