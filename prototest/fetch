@@ -9,7 +9,7 @@ declare SERVER_URL="https://github.com/hkjn/junk/releases/download/${VERSION}/re
 
 fetch() {
 	echo "Fetching report_server binary ${VERSION}.."
-	curl -vfsSLo report_server ${SERVER_URL}
+	curl -fsSLo report_server ${SERVER_URL}
 	chmod +x report_server
 	sudo mv report_server /usr/local/bin/
 }
