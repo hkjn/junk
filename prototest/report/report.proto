@@ -13,20 +13,32 @@ option java_multiple_files = true;
 option java_package = "me.hkjn.prototest.report";
 option java_outer_classname = "Report";
 
-// The request message.
-message Request {
-  string name = 1;
+// ReportRequest describes the request to report in from a client.
+message ReportRequest {
+	string name = 1;
 	google.protobuf.Timestamp ts = 2;
 	map<string, string> info = 3;
 }
 
-// The response message.
-message Response {
-  string message = 1;
+// ReportResponse describes the response from the server when a client reports in.
+message ReportResponse {
+	string message = 1;
+}
+
+// InfoRequest describes a request to look up info on known clients.
+message InfoRequest {}
+
+// InfoResponse describes a response for info on known clients.
+message InfoResponse {
+       // The info field describes each known client and their info.
+       map<string<map<string, string>> = 1;
 }
 
 // The Report service definition.
 service Report {
-  // Send report to server.
-  rpc Send (Request) returns (Response) {}
+	// Send report to server.
+	rpc Send(ReportRequest) returns (ReportResponse) {}
+	// Query for info on known clients.
+	rpc Info(InfoRequest) returns (InfoResponse) {}
 }
+
