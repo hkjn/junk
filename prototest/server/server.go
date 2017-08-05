@@ -34,9 +34,6 @@ type (
 	clientInfo struct {
 		// lastSeen is the last time we heard from the client.
 		lastSeen time.Time
-		// sentGoodbye is true if we haven't heard from client in some
-		// time and have sent a message about it.
-		sentGoodbye bool
 		// info is the map of extra info reported by the client.
 		info map[string]string
 	}
@@ -60,7 +57,6 @@ func newRpcServer() *grpc.Server {
 	s := &reportServer{map[string]clientInfo{}}
 	pb.RegisterReportServer(rpcServer, s)
 	log.Printf("Registering GreeterServer to tcp listener on %q..\n", defaultPort)
-	go s.maybeExpireClients()
 	reflection.Register(rpcServer)
 	return rpcServer
 
@@ -131,32 +127,6 @@ func (s *reportServer) Send(ctx context.Context, req *pb.Request) (*pb.Response,
 	)
 	log.Printf("Responding to client %q: %q..\n", req.Name, resp)
 	return &pb.Response{Message: resp}, nil
-}
-
-// maybeExpireClients runs forever, and periodically checks if any clients expired.
-func (s *reportServer) maybeExpireClients() {
-	log.Printf("Checking if any clients fell out of touch..")
-	maxTime := time.Minute * 10
-	for {
-		time.Sleep(time.Second * 60)
-		for name, v := range s.clients {
-			if time.Since(v.lastSeen) > maxTime {
-				msg := fmt.Sprintf(
-					"Node %q fell out of touch; haven't heard from them in %v",
-					name,
-					time.Since(v.lastSeen),
-				)
-				c := s.clients[name]
-				if !c.sentGoodbye {
-					log.Printf("Have not sent goodbye to client %v, doing that..")
-					c.sentGoodbye = true
-					s.clients[name] = c
-					log.Println(msg)
-					sendSlack(msg)
-				}
-			}
-		}
-	}
 }
 
 func main() {
