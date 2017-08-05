@@ -1,6 +1,6 @@
 #
 # This is a systemd service for running report_client, which should be copied
-# to /lib/systemd/systemd/.
+# to /lib/systemd/system/.
 #
 # It can then be started with systemctl start report_server.service.
 #
