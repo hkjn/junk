@@ -12,18 +12,21 @@ declare CLIENT_URL="${RELEASE_URL}/report_client_$(uname -m)"
 fetch() {
 	local target
 	target="$1"
-	[[ "${target}" = "report_server" ]] || [[ "${target}" = "report_client" ]] || {
-		echo "Usage: fetch [ report_server | report_client ]" >&2
-		exit 1	
-	}
-	echo "Fetching ${target} binary ${VERSION}.."
+	[[ "${target}" = "report_server" ]] || [[ "${target}" = "report_client" ]] || \
+	    fatal "Usage: fetch [ report_server | report_client ]"
+	local tempdir
+	tempdir="$(mktemp -d)"
+	cd "${tempdir}"
+	info "Fetching ${target} binary ${VERSION} for $(uname -m).."
 	curl -fSLo ${target} \
 	     --progress-bar \
 	     ${SERVER_URL} \
 	   | tee /dev/null
 	sudo install ${target} /usr/local/bin/${target}
-	echo "Installed ${target} ${VERSION}."
+	info "Installed ${target} ${VERSION}."
 }
 
+cd "${BASE}"
+source "logging.sh"
 fetch report_server
 fetch report_client

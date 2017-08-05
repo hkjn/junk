@@ -3,16 +3,7 @@
 #
 set -euo pipefail
 
-load() {
-	local ns="hkjn.me"
-	local p="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-	while [ "$p" != "" ] && [ $(basename $p) != "$ns" ]; do p="${p/\/$(basename $p)/}"; done
-	source "$p/lib/$1" 2>/dev/null || { echo "[$0] FATAL: Couldn't find $ns/lib/$1." >&2; exit 1; }
-	export BASE="$p"
-}
-load "logging.sh"
-cd "$BASE/junk/prototest"
-
+declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 declare VERSION="$(cat VERSION)"
 declare COMMIT=$(git log -1 --pretty=format:"%h")
 declare COMMIT_MSG=$(git log --format=%B -n 1)
@@ -89,6 +80,8 @@ EOT
   debugV "Stripped url is '${URL}'"
 }
 
+cd "${BASE}"
+source "logging.sh"
 preflight_checks
 build_binaries
 create_tag
