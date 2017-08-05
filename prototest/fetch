@@ -29,12 +29,18 @@ fetch() {
 	     --progress-bar \
 	     ${url} \
 	   | tee /dev/null
-	sudo install ${target} /usr/local/bin/${target}
+	if ! exists sudo; then
+		debug "No 'sudo', will install to '$GOPATH/bin'.."
+		install ${target} ${GOPATH}/bin/
+	else
+		sudo install ${target} /usr/local/bin/${target}
+	fi
 	info "Installed ${target} ${VERSION}."
 }
 
 cd "${BASE}"
 source "logging.sh"
+source "tools.sh"
 
 fetch report_server
 fetch report_client
