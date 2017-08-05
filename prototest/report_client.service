@@ -12,9 +12,9 @@ After=network-online.target
 Environment=REPORT_ADDR=mon.hkjn.me:50051
 Environment=REPORT_NAME=%H
 # Environment=REPORT_DEBUGGING=true
-Environment=REPORT_FACTS_PATH=/etc/reporter/facts.json
+Environment=REPORT_FACTS_PATH=/etc/report/facts.json
 EnvironmentFile=/etc/shared.env
-ExecStartPre=-/bin/bash -c "gather_facts > /etc/reporter/facts.json"
+ExecStartPre=-/bin/bash -c "gather_facts > /etc/report/facts.json"
 ExecStart=/bin/bash -c report_client
 
 [Install]
