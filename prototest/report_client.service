@@ -1,6 +1,6 @@
 #
 # This is a systemd service for running a system report_client, which should be copied
-# to /usr/lib/systemd/user/ to enable it as a user service.
+# to /usr/lib/systemd/user/ (or /etc/systemd/user/ on CoreOS) to enable it as a user service.
 #
 # It can then be started with systemctl --user start report_client.service.
 #
