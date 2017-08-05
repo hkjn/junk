@@ -14,8 +14,8 @@ USER go
 
 RUN sh -c "GOARCH=amd64 go build -o ~/bin/report_client_x86_64 ./client/"
 RUN sh -c "GOARCH=amd64 go build -o ~/bin/report_server_x86_64 ./server/"
-RUN sh -c "GOARCH=arm go build -o ~/bin/report_client_arm7l ./client/"
-RUN sh -c "GOARCH=arm go build -o ~/bin/report_server_arm7l ./server/"
+RUN sh -c "GOARCH=arm go build -o ~/bin/report_client_armv7l ./client/"
+RUN sh -c "GOARCH=arm go build -o ~/bin/report_server_armv7l ./server/"
 WORKDIR /home/go/bin
 RUN pwd && ls -hsal ~/bin && ls -hsal
 CMD echo "Binaries available in $(pwd): $(ls report_*)"
