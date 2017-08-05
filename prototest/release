@@ -17,7 +17,7 @@ declare VERSION="$(cat VERSION)"
 declare COMMIT=$(git log -1 --pretty=format:"%h")
 declare COMMIT_MSG=$(git log --format=%B -n 1)
 declare GITHUB_TOKEN=${GITHUB_TOKEN:-"$(cat /etc/secrets/github/release_token)"}
-declare PROJECT_URL="https://github.com/hkjn/junk/commit"
+declare LINK_URL="https://github.com/hkjn/junk/releases/tag"
 
 preflight_checks() {
   [[ "$GITHUB_TOKEN" ]] || {
@@ -98,4 +98,4 @@ upload report_client_x86_64 ${URL}
 upload report_server_x86_64 ${URL}
 upload report_client_armv7l ${URL}
 upload report_server_armv7l ${URL}
-./sendslack "Uploaded \`${VERSION}\`: ${PROJECT_URL}/${COMMIT}"
+./sendslack "Released ${LINK_URL}/${VERSION}."
