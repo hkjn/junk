@@ -15,14 +15,14 @@ slacksend() {
 		return 1
 	fi
 
- 	echo "Sending a message '$MESSAGE' to slack"
+ 	echo "Sending a message '${message}' to slack"
 	local response
 	response=$(curl -s -H 'Content-type: application/json' \
 	                --data "{\"text\":\"$message\"}" \
 			${SLACKURL}/${SLACKTOKEN})
 
     	if [[ "${response}" != "ok" ]]; then
-	      echo "Bad Slack response: '$RESPONSE'" >&2
+	      echo "Bad Slack response: '${response}'" >&2
 	      return 1
 	fi
 	return 0
