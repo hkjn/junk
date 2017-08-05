@@ -1,0 +1,16 @@
+#
+# This is a systemd service for running report_client, which should be copied
+# to /lib/systemd/systemd/.
+#
+# It can then be started with systemctl start report_server.service.
+#
+[Unit]
+Description=report
+After=network-online.target
+
+[Service]
+Environment=REPORT_SLACK_TOKEN=/etc/secrets/slack/token.asc
+ExecStart=/bin/bash -c "report_server"
+
+[Install]
+WantedBy=network-online.target
