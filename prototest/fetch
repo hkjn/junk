@@ -29,6 +29,7 @@ fetch() {
 	     --progress-bar \
 	     ${url} \
 	   | tee /dev/null
+	sudo mkdir -p /opt/bin/
 	sudo install ${target} /opt/bin/${target}
 	info "Installed ${target} ${VERSION}."
 }
