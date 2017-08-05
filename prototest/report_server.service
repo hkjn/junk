@@ -9,9 +9,10 @@ Description=report
 After=network-online.target
 
 [Service]
-Environment=REPORT_SLACK_TOKEN=/etc/secrets/slack/token.asc
 EnvironmentFile=/etc/report/report.env
-ExecStart=/bin/bash -c "report_server"
+ExecStart=/bin/bash -c " \
+    REPORT_SLACK_TOKEN=$(cat /etc/secrets/slack/token.asc) \
+    report_server"
 
 [Install]
 WantedBy=network-online.target
