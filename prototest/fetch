@@ -29,12 +29,7 @@ fetch() {
 	     --progress-bar \
 	     ${url} \
 	   | tee /dev/null
-	if ! exists sudo; then
-		debug "No 'sudo', will install to '$GOPATH/bin'.."
-		install ${target} ${GOPATH}/bin/
-	else
-		sudo install ${target} /usr/local/bin/${target}
-	fi
+	sudo install ${target} /opt/bin/${target}
 	info "Installed ${target} ${VERSION}."
 }
 
