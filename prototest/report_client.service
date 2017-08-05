@@ -9,11 +9,13 @@ Description=report
 After=network-online.target
 
 [Service]
+EnvironmentFile=/etc/shared.env
 Environment=REPORT_ADDR=mon.hkjn.me:50051
 Environment=REPORT_NAME=%H
-# Environment=REPORT_DEBUGGING=true
 Environment=REPORT_FACTS_PATH=/etc/report/facts.json
-EnvironmentFile=/etc/shared.env
+Environment=REPORT_SLACK_TOKEN=/etc/secrets/slack/token.asc
+EnvironmentFile=/etc/report/report.env
+
 ExecStartPre=-/bin/bash -c "gather_facts > /etc/report/facts.json"
 ExecStart=/bin/bash -c report_client
 

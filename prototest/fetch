@@ -28,5 +28,6 @@ fetch() {
 
 cd "${BASE}"
 source "logging.sh"
+
 fetch report_server
 fetch report_client
