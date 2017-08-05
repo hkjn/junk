@@ -9,7 +9,7 @@ declare SERVER_URL="https://github.com/hkjn/junk/releases/download/${VERSION}/re
 
 fetch() {
 	echo "Fetching report_server binary ${VERSION}.."
-	curl -fsSLo report_server \
+	curl -fSLo report_server \
 	     --progress-bar \
 	     ${SERVER_URL} \
 	   | tee /dev/null
