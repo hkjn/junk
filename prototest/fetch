@@ -1,20 +1,29 @@
 #
-# Install the latest version of the server.
+# Install the latest version of the binaries.
 #
 set -euo pipefail
 
 declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 declare VERSION="$(cat VERSION)"
-declare SERVER_URL="https://github.com/hkjn/junk/releases/download/${VERSION}/report_server_$(uname -m)"
+declare RELEASE_URL="https://github.com/hkjn/junk/releases/download/${VERSION}"
+declare SERVER_URL="${RELEASE_URL}/report_server_$(uname -m)"
+declare CLIENT_URL="${RELEASE_URL}/report_client_$(uname -m)"
 
 fetch() {
-	echo "Fetching report_server binary ${VERSION}.."
-	curl -fSLo report_server \
+	local target
+	target="$1"
+	[[ "${target}" = "report_server" ]] || [[ "${target}" = "report_client" ]] || {
+		echo "Usage: fetch [ report_server | report_client ]" >&2
+		exit 1	
+	}
+	echo "Fetching ${target} binary ${VERSION}.."
+	curl -fSLo ${target} \
 	     --progress-bar \
 	     ${SERVER_URL} \
 	   | tee /dev/null
-	sudo install report_server /usr/local/bin/report_server
-	echo "Installed report_server ${VERSION}."
+	sudo install ${target} /usr/local/bin/${target}
+	echo "Installed ${target} ${VERSION}."
 }
 
-fetch
+fetch report_server
+fetch report_client
