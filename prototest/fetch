@@ -18,9 +18,16 @@ fetch() {
 	tempdir="$(mktemp -d)"
 	cd "${tempdir}"
 	info "Fetching ${target} binary ${VERSION} for $(uname -m).."
+	local url
+	if [[ "${target}" = "report_server" ]]; then
+		url="${SERVER_URL}"
+	else
+		url="${CLIENT_URL}"
+	fi
+	debug "Sending request: curl -fSLo ${url}"
 	curl -fSLo ${target} \
 	     --progress-bar \
-	     ${SERVER_URL} \
+	     ${url} \
 	   | tee /dev/null
 	sudo install ${target} /usr/local/bin/${target}
 	info "Installed ${target} ${VERSION}."
