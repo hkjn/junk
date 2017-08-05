@@ -9,7 +9,7 @@ FACTS=$(cat <<EOT
 	"kernel_name": "$(uname -s)",
 	"kernel_version": "$(uname -r)",
 	"machine_type": "$(uname -m)",
-	"platform": "${PLATFORM:-baremetal}",
+	"platform": "${PLATFORM:-unknown}",
 	"memory_total_mb": "$(free -m | awk '/Mem:/ { print $2 }')",
 	"memory_avail_mb": "$(free -m | awk '/Mem:/ { print $7 }')"
 }
