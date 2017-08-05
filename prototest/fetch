@@ -35,7 +35,6 @@ fetch() {
 
 cd "${BASE}"
 source "logging.sh"
-source "tools.sh"
 
 fetch report_server
 fetch report_client
