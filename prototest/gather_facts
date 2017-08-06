@@ -1,7 +1,13 @@
-#!/usr/bin/env bash
 #
 # Gather facts around the environment and output them in JSON format.
 #
+declare GCP_METADATA_URL="http://metadata.google.internal/computeMetadata/v1/instance/description"
+declare PLATFORM="${PLATFORM:-"unknown"}"
+
+if curl -sH "Metadata-Flavor: Google" "${GCP_METADATA_URL}"; then
+	PLATFORM="gcp"
+fi
+
 FACTS=$(cat <<EOT
 {
 	"cpu_arch": "$(uname -m)",
@@ -9,7 +15,7 @@ FACTS=$(cat <<EOT
 	"kernel_name": "$(uname -s)",
 	"kernel_version": "$(uname -r)",
 	"machine_type": "$(uname -m)",
-	"platform": "${PLATFORM:-unknown}",
+	"platform": "${PLATFORM}",
 	"memory_total_mb": "$(free -m | awk '/Mem:/ { print $2 }')",
 	"memory_avail_mb": "$(free -m | awk '/Mem:/ { print $7 }')"
 }
