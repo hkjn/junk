@@ -47,14 +47,14 @@ func getName(d string) string {
 	return d
 }
 
-// getFacts returns the extra info to use when reporting in.
-func getFacts(d string) (*map[string]string, error) {
+// getInfo returns the extra info to use when reporting in.
+func getInfo(d string) (*pb.ClientInfo, error) {
 	factsPath := os.Getenv("REPORT_FACTS_PATH")
 	if factsPath == "" {
 		factsPath = d
 	}
 	debug("Reading facts.json from %q..\n", factsPath)
-	info := &map[string]string{}
+	info := &pb.ClientInfo{}
 	f, err := os.Open(factsPath)
 	if err != nil {
 		return nil, err
@@ -62,10 +62,6 @@ func getFacts(d string) (*map[string]string, error) {
 	if err := json.NewDecoder(f).Decode(info); err != nil {
 		return nil, err
 	}
-	//	cpuArch := os.Getenv("REPORT_CPU_ARCH")
-	//	if cpuArch != "" {
-	//		info["cpu_arch"] = cpuArch
-	//	}
 	return info, nil
 }
 
@@ -80,7 +76,7 @@ func getClient(addr string) (pb.ReportClient, func() error) {
 
 // send reports to the server.
 func send(c pb.ReportClient, name string) error {
-	info, err := getFacts(defaultFactsPath)
+	info, err := getInfo(defaultFactsPath)
 	if err != nil {
 		return err
 	}
@@ -90,7 +86,7 @@ func send(c pb.ReportClient, name string) error {
 			Seconds: time.Now().Unix(),
 			Nanos:   int32(time.Now().Nanosecond()),
 		},
-		Info: *info,
+		Info: info,
 	}
 	log.Printf("Sending request: %v\n", req)
 	r, err := c.Send(context.Background(), req)

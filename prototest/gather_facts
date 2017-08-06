@@ -42,8 +42,7 @@ for line in sys.stdin.readlines():
 	parts = line.split()
 	if len(parts) != 4:
 		continue
-	source,size,pcent,target = parts
- 	data.append(dict(source=source, size=size, pcent=pcent, target=target))
+	data.append(dict(source=parts[0], size=parts[1], percent_used=parts[2], target=parts[3]))
 sys.stdout.write(json.dumps(data))
 EOT
 )

@@ -9,7 +9,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	googletime "github.com/golang/protobuf/ptypes/timestamp"
@@ -34,8 +33,8 @@ type (
 	clientInfo struct {
 		// lastSeen is the last time we heard from the client.
 		lastSeen time.Time
-		// info is the map of extra info reported by the client.
-		info map[string]string
+		// info is extra info reported by the client.
+		info *pb.ClientInfo
 	}
 	// reportServer is used to implement report.GreeterServer.
 	reportServer struct {
@@ -100,9 +99,8 @@ func (s *reportServer) Info(ctx context.Context, req *pb.InfoRequest) (*pb.InfoR
 	return &pb.InfoResponse{
 		Info: map[string]*pb.ClientInfo{
 			"notimplementedyet": &pb.ClientInfo{
-				Data: map[string]string{
-					"size": "yuuge",
-				},
+				CpuArch: "gelatinous",
+				Hostname: "notimplementedyet-inforesponse",
 			},
 		},
 	}, nil
@@ -111,15 +109,12 @@ func (s *reportServer) Info(ctx context.Context, req *pb.InfoRequest) (*pb.InfoR
 // Send implements report.ReportServer.
 func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.ReportResponse, error) {
 	c, existed := s.clients[req.Name]
-	info := []string{}
-	for k, v := range req.Info {
-		info = append(info, fmt.Sprintf("  `%s`: `%s`", k, v))
-	}
+	info := fmt.Sprintf("`%s` (`%s`)", c.info.Hostname, c.info.CpuArch)
 	title := "Node"
 	if !existed {
 		title = "New node"
 	}
-	msg := fmt.Sprintf("%s `%s` reported to us (%s)", title, req.Name, strings.Join(info, ","))
+	msg := fmt.Sprintf("%s `%s` reported to us (%s)", title, req.Name, info)
 	log.Println(msg)
 	if existed {
 		log.Printf("Heard from known client for the first time in %v: %s\n", time.Since(c.lastSeen), msg)
