@@ -35,21 +35,6 @@ create_tag() {
   git push origin --tags
 }
 
-upload() {
-  [[ $# -ne 2 ]] && fatal "usage: upload file url"
-  info "Uploading $1 to $2.."
-  local response
-  response=$(curl \
-     -H "Content-type: application/octet-stream" \
-     -H "Accept: application/vnd.github.v3+json" \
-     -H "Authorization: token $GITHUB_TOKEN" \
-     --data-binary @${1} \
-     --progress-bar \
-     "${2}?name=${1}" | tee /dev/null)
-  debugV "Upload response for $1: $response"
-  [[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload $1"
-}
-
 create_release() {
   info "Creating release.."
   local payload
@@ -80,6 +65,21 @@ EOT
   debugV "Stripped url is '${URL}'"
 }
 
+upload() {
+  [[ $# -ne 2 ]] && fatal "usage: upload file url"
+  info "Uploading $1 to $2.."
+  local response
+  response=$(curl \
+     -H "Content-type: application/octet-stream" \
+     -H "Accept: application/vnd.github.v3+json" \
+     -H "Authorization: token $GITHUB_TOKEN" \
+     --data-binary @${1} \
+     --progress-bar \
+     "${2}?name=${1}" | tee /dev/null)
+  debugV "Upload response for $1: $response"
+  [[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload $1"
+}
+
 cd "${BASE}"
 source "logging.sh"
 source "slack.sh"
@@ -87,6 +87,9 @@ source "slack.sh"
 preflight_checks
 build_binaries
 create_tag
+# TODO(hkjn): Also should run protoc in case .proto files changed
+# here (or fail in case or diff; changed .pb.proto files should
+# have been committed).
 create_release
 
 upload report_client_x86_64 ${URL}
