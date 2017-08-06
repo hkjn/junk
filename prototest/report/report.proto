@@ -28,10 +28,15 @@ message ReportResponse {
 // InfoRequest describes a request to look up info on known clients.
 message InfoRequest {}
 
+// ClientInfo describes info for one client.
+message ClientInfo {
+	map<string, string> data = 1;
+}
+
 // InfoResponse describes a response for info on known clients.
 message InfoResponse {
        // The info field describes each known client and their info.
-       map<string<map<string, string>> = 1;
+       map<string, ClientInfo> info = 1;
 }
 
 // The Report service definition.

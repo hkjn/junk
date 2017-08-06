@@ -84,7 +84,7 @@ func send(c pb.ReportClient, name string) error {
 	if err != nil {
 		return err
 	}
-	req := &pb.Request{
+	req := &pb.ReportRequest{
 		Name: name,
 		Ts: &googletime.Timestamp{
 			Seconds: time.Now().Unix(),

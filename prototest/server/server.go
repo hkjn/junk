@@ -59,7 +59,6 @@ func newRpcServer() *grpc.Server {
 	log.Printf("Registering GreeterServer to tcp listener on %q..\n", defaultPort)
 	reflection.Register(rpcServer)
 	return rpcServer
-
 }
 
 // sendSlack sends msg to Slack.
@@ -96,8 +95,21 @@ func getTime(t *googletime.Timestamp) time.Time {
 	return time.Unix(t.Seconds, int64(t.Nanos))
 }
 
+func (s *reportServer) Info(ctx context.Context, req *pb.InfoRequest) (*pb.InfoResponse, error) {
+	log.Printf("Received info request\n")
+	return &pb.InfoResponse{
+		Info: map[string]*pb.ClientInfo{
+			"notimplementedyet": &pb.ClientInfo{
+				Data: map[string]string{
+					"size": "yuuge",
+				},
+			},
+		},
+	}, nil
+}
+
 // Send implements report.ReportServer.
-func (s *reportServer) Send(ctx context.Context, req *pb.Request) (*pb.Response, error) {
+func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.ReportResponse, error) {
 	c, existed := s.clients[req.Name]
 	info := []string{}
 	for k, v := range req.Info {
@@ -126,7 +138,7 @@ func (s *reportServer) Send(ctx context.Context, req *pb.Request) (*pb.Response,
 		time.Now().Unix(),
 	)
 	log.Printf("Responding to client %q: %q..\n", req.Name, resp)
-	return &pb.Response{Message: resp}, nil
+	return &pb.ReportResponse{Message: resp}, nil
 }
 
 func main() {
