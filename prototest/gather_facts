@@ -14,7 +14,7 @@ gcp_metadata() {
 	curl -sH "Metadata-Flavor: Google" "${GCP_METADATA_URL}/${1}"
 }
 
-if gcp_metadata "description"; then
+if gcp_metadata "description" > /dev/null; then
 	PLATFORM="gcp"
 fi
 
@@ -29,6 +29,10 @@ if [[ "${PLATFORM}" = "gcp" ]]; then
 fi
 
 disk_info() {
+	if ! which python > /dev/null 2>&1; then
+		echo "[]"
+		return
+	fi
 	local pyscript
 	pyscript=$(cat <<'EOT'
 import sys, json
