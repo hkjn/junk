@@ -109,12 +109,12 @@ func (s *reportServer) Info(ctx context.Context, req *pb.InfoRequest) (*pb.InfoR
 // Send implements report.ReportServer.
 func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.ReportResponse, error) {
 	c, existed := s.clients[req.Name]
-	info := fmt.Sprintf("`%s` (`%s`)", c.info.Hostname, c.info.CpuArch)
 	title := "Node"
 	if !existed {
 		title = "New node"
 	}
-	msg := fmt.Sprintf("%s `%s` reported to us (%s)", title, req.Name, info)
+	info := fmt.Sprintf("`%s` (`%s`)", req.Info.Hostname, req.Info.CpuArch)
+	msg := fmt.Sprintf("%s `%s` reported to us: %s", title, req.Name, info)
 	log.Println(msg)
 	if existed {
 		log.Printf("Heard from known client for the first time in %v: %s\n", time.Since(c.lastSeen), msg)
@@ -122,10 +122,11 @@ func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.Rep
 		log.Printf("Heard from new client: %s\n", msg)
 		sendSlack(msg)
 	}
-	s.clients[req.Name] = clientInfo{
+	c = clientInfo{
 		lastSeen: getTime(req.Ts),
 		info:     req.Info,
 	}
+	s.clients[req.Name] = c
 	resp := fmt.Sprintf(
 		"Hello %q, thanks for writing me at %v, it is now %v.",
 		req.Name,
@@ -137,8 +138,9 @@ func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.Rep
 }
 
 func main() {
+	log.Printf("report_server %s starting..\n", Version)
 	if slackToken == "" {
-		log.Fatalf("No REPORT_SLACK_TOKEN specified.\n")
+		log.Println("No REPORT_SLACK_TOKEN specified, can't report to Slack.")
 	}
 	rpcServer := newRpcServer()
 	lis, err := net.Listen("tcp", defaultPort)

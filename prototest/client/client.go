@@ -98,6 +98,7 @@ func send(c pb.ReportClient, name string) error {
 }
 
 func main() {
+	log.Printf("report_client %s starting..\n", Version)
 	addr := getAddr(defaultAddr)
 	name := getName(defaultName)
 

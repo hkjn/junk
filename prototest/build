@@ -8,6 +8,13 @@ declare BUILD_DIR="$(mktemp -d)"
 echo "Building in $BASE_IMAGE.."
 sed "s|{{ARG_FROM}}|${BASE_IMAGE}|g" Dockerfile.build > $BUILD_DIR/Dockerfile
 cp -r {client,server,report,vendor} $BUILD_DIR
+echo "package main" > ${BUILD_DIR}/client/version.go
+echo "const Version=\"$(cat VERSION)\"" >> ${BUILD_DIR}/client/version.go
+
+echo "package main" > ${BUILD_DIR}/server/version.go
+echo "const Version=\"$(cat VERSION)\"" >> ${BUILD_DIR}/server/version.go
+
+# TODO: Use heredoc.
 docker build -t repotest-build $BUILD_DIR
 docker run --name repotest-build repotest-build
 rm -rf bin/
