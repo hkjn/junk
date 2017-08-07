@@ -10,7 +10,7 @@ After=network-online.target
 
 [Service]
 EnvironmentFile=/etc/shared.env
-Environment=PATH=/usr/bin/:/opt/bin
+Environment=PATH=/usr/bin/:/opt/bin:/bin
 Environment=REPORT_ADDR=mon.hkjn.me:50051
 Environment=REPORT_NAME=%H
 Environment=REPORT_FACTS_PATH=/etc/report/facts.json
