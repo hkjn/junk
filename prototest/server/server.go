@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"os"
 	"time"
 
@@ -106,6 +107,18 @@ func (s *reportServer) Info(ctx context.Context, req *pb.InfoRequest) (*pb.InfoR
 	}, nil
 }
 
+// getInfo describes the client info as a string.
+func getInfo(info *pb.ClientInfo) string {
+	extra := []string{}
+	if info.CpuArch != "" {
+		extra = append(extra, fmt.Sprintf("`%s`", info.CpuArch))
+	}
+	if info.KernelName != "" {
+		extra = append(extra, fmt.Sprintf("`%s`", info.KernelName))
+	}
+	return fmt.Sprintf("`%s` (`%s`)", info.Hostname, strings.Join(extra, ", "))
+}
+
 // Send implements report.ReportServer.
 func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.ReportResponse, error) {
 	c, existed := s.clients[req.Name]
@@ -113,8 +126,7 @@ func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.Rep
 	if !existed {
 		title = "New node"
 	}
-	info := fmt.Sprintf("`%s` (`%s`)", req.Info.Hostname, req.Info.CpuArch)
-	msg := fmt.Sprintf("%s `%s` reported to us: %s", title, req.Name, info)
+	msg := fmt.Sprintf("%s `%s` reported to us: %s", title, req.Name, getInfo(req.Info))
 	log.Println(msg)
 	if existed {
 		log.Printf("Heard from known client for the first time in %v: %s\n", time.Since(c.lastSeen), msg)
