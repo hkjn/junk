@@ -9,7 +9,8 @@ Description=report
 After=network-online.target
 
 [Service]
-EnvironmentFile=/etc/report/report.env
+Environment=REPORT_ADDR=localhost:50051
+# Environment=REPORT_DEBUGGING=true
 ExecStart=/bin/bash -c " \
     REPORT_SLACK_TOKEN=$(cat /etc/secrets/slack/token.asc) \
     /opt/bin/report_server"
