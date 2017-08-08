@@ -132,7 +132,7 @@ func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.Rep
 	if !existed {
 		title = "New node"
 	}
-	msg := fmt.Sprintf("%s `%s` reported to us: %s", title, req.Name, getInfo(req.Info))
+	msg := fmt.Sprintf("%s reported to us: %s", title, getInfo(req.Info))
 	log.Println(msg)
 	log.Printf("Full info: %+v\n", req.Info)
 	if existed {
