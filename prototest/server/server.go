@@ -122,7 +122,7 @@ func getInfo(info *pb.ClientInfo) string {
 	if len(info.Tags) > 0 {
 		extra = append(extra, info.Tags...)
 	}
-	return fmt.Sprintf("`%s` (`%s`)", info.Hostname, strings.Join(extra, ", "))
+	return fmt.Sprintf("`%s` (%s)", info.Hostname, strings.Join(extra, ", "))
 }
 
 // Send implements report.ReportServer.
@@ -134,6 +134,7 @@ func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.Rep
 	}
 	msg := fmt.Sprintf("%s `%s` reported to us: %s", title, req.Name, getInfo(req.Info))
 	log.Println(msg)
+	log.Printf("Full info: %+v\n", req.Info)
 	if existed {
 		log.Printf("Heard from known client for the first time in %v: %s\n", time.Since(c.lastSeen), msg)
 	} else {
