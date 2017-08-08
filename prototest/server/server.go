@@ -116,6 +116,12 @@ func getInfo(info *pb.ClientInfo) string {
 	if info.KernelName != "" {
 		extra = append(extra, fmt.Sprintf("`%s`", info.KernelName))
 	}
+	if info.Platform != "" {
+		extra = append(extra, fmt.Sprintf("`%s`", info.Platform))
+	}
+	if len(info.Tags) > 0 {
+		extra = append(extra, info.Tags...)
+	}
 	return fmt.Sprintf("`%s` (`%s`)", info.Hostname, strings.Join(extra, ", "))
 }
 
