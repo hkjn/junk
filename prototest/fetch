@@ -4,6 +4,7 @@
 set -euo pipefail
 
 declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "${BASE}"
 declare VERSION="$(cat VERSION)"
 declare RELEASE_URL="https://github.com/hkjn/junk/releases/download/${VERSION}"
 declare SERVER_URL="${RELEASE_URL}/report_server_$(uname -m)"
@@ -34,7 +35,6 @@ fetch() {
 	info "Installed ${target} ${VERSION}."
 }
 
-cd "${BASE}"
 source "logging.sh"
 
 fetch report_server
