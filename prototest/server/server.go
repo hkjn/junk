@@ -133,6 +133,9 @@ func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.Rep
 		title = "New node"
 	}
 	msg := fmt.Sprintf("%s reported to us: %s", title, getInfo(req.Info))
+	// TODO: Validate data; seems like it can become corrupt:
+	// Full info: allowed_ssh_keys:"memory_total_mb" cpu_arch:"7867"
+
 	log.Println(msg)
 	log.Printf("Full info: %+v\n", req.Info)
 	if existed {
