@@ -160,7 +160,7 @@ func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.Rep
 }
 
 func main() {
-	log.Printf("report_server %s starting..\n", Version)
+	log.Printf("The report_server %s starting..\n", Version)
 	if slackToken == "" {
 		log.Println("No REPORT_SLACK_TOKEN specified, can't report to Slack.")
 	}
