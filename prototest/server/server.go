@@ -70,7 +70,7 @@ func sendSlack(msg string) error {
 		// TODO: Find reason icon_emoji seems to be ignored.
 		// IconEmoji string `json:"icon_emoji"`
 	}{
-		Text:      msg,
+		Text:      fmt.Sprintf("`[report_server]`", msg),
 		LinkNames: 1,
 		// IconEmoji: ":heavy_exclamation_mark:",
 	}
@@ -114,13 +114,13 @@ func getInfo(info *pb.ClientInfo) string {
 		extra = append(extra, fmt.Sprintf("`%s`", info.CpuArch))
 	}
 	if info.KernelName != "" {
-		extra = append(extra, fmt.Sprintf("`%s`", info.KernelName))
+		extra = append(extra, fmt.Sprintf("`%s %s`", info.KernelName, info.KernelVersion))
 	}
 	if info.Platform != "" {
 		extra = append(extra, fmt.Sprintf("`%s`", info.Platform))
 	}
-	if len(info.Tags) > 0 {
-		extra = append(extra, info.Tags...)
+	for i := range info.Tags {
+		extra = append(extra, fmt.Sprintf("`%s`", info.Tags[i]))
 	}
 	return fmt.Sprintf("`%s` (%s)", info.Hostname, strings.Join(extra, ", "))
 }
