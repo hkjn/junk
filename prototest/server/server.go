@@ -169,7 +169,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	sendSlack(fmt.Sprintf("`report_server` %s starting..", Version))
+	sendSlack(fmt.Sprintf("%s `report_server` starting..", Version))
 	if err := rpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
