@@ -4,11 +4,15 @@
 set -euo pipefail
 
 declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "${BASE}"
 declare VERSION="$(cat VERSION)"
 declare COMMIT=$(git log -1 --pretty=format:"%h")
 declare COMMIT_MSG=$(git log --format=%B -n 1)
 declare GITHUB_TOKEN=${GITHUB_TOKEN:-"$(cat /etc/secrets/github/release_token)"}
 declare LINK_URL="https://github.com/hkjn/junk/releases/tag"
+
+source "logging.sh"
+source "slack.sh"
 
 preflight_checks() {
   [[ "$GITHUB_TOKEN" ]] || {
@@ -79,10 +83,6 @@ upload() {
   debugV "Upload response for $1: $response"
   [[ ${PIPESTATUS[0]} -eq 0 ]] || fatal "Failed to upload $1"
 }
-
-cd "${BASE}"
-source "logging.sh"
-source "slack.sh"
 
 preflight_checks
 build_binaries
