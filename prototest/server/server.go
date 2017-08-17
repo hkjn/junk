@@ -70,7 +70,7 @@ func sendSlack(msg string) error {
 		// TODO: Find reason icon_emoji seems to be ignored.
 		// IconEmoji string `json:"icon_emoji"`
 	}{
-		Text:      fmt.Sprintf("`[report_server]`", msg),
+		Text:      fmt.Sprintf("`[report_server]` %s", msg),
 		LinkNames: 1,
 		// IconEmoji: ":heavy_exclamation_mark:",
 	}
