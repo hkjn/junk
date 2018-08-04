@@ -1,4 +1,4 @@
-// Package junk is as advertised nothing useful.
+// Package junk is as advertised nothing useful, and might be harmful to your health.
 //
 // It exists to debug and test some things out.
 package junk
