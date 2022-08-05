@@ -13,7 +13,7 @@ func main() {
 	// sErr := &bar.SomeError{}
 	err := bar.Fail()
 
-	if errors.As(err, &sErr) && sErr.Code() == 42 {
+	if errors.As(err, &sErr) && sErr.GetCode() == 44 {
 		panic(fmt.Sprintf("omg that's a big number: %v", sErr))
 	}
 	panic("phew all is fine")
