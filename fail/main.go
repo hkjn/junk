@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"gitlab.com/flimzy/ale/errors"
 
 	"foo/bar"
@@ -12,7 +14,7 @@ func main() {
 	err := bar.Fail()
 
 	if errors.As(err, &sErr) && sErr.Code() == 42 {
-		panic("omg that's a big number")
+		panic(fmt.Sprintf("omg that's a big number: %v", sErr))
 	}
 	panic("phew all is fine")
 }
